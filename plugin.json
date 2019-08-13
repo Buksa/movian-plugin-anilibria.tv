@@ -1,0 +1,14 @@
+{
+    "type": "ecmascript",
+    "apiversion": 2,
+    "id": "anilibria.tv",
+    "file": "index.js",
+    "showtimeVersion": "5",
+    "version": "0.0.1",
+    "author": "Buksa",
+    "title": "anilibria.tv",
+    "icon": "logo.png",
+    "category": "video",
+    "synopsis": "https://www.anilibria.tv",
+    "description": "<p>anilibria plugin - is the integration of the website <a href=\"https://www.anilibria.tv\">www.anilibria.tv</a> into Movian"
+}

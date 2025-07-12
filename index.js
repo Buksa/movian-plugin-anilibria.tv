@@ -17,56 +17,73 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// parsit plugin.json
 var plugin = JSON.parse(Plugin.manifest);
 var PREFIX = plugin.id;
 var LOGO = Plugin.path + plugin.icon;
-var page = require('movian/page');
+var io = require('native/io');
+var service = require('movian/service');
+var settings = require('movian/settings');
+var page = require("movian/page");
 var http = require("movian/http");
-var html = require("movian/html");
+var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+console.error(plugin.id + ' ' + plugin.version);
 
 // Create the service (ie, icon on home screen)
-require('movian/service').create(plugin.title, PREFIX + ':start', 'video', true, LOGO);
+service.create(plugin.title, PREFIX + ':start', 'video', true, LOGO);
+settings.globalSettings(plugin.id, plugin.title, LOGO, plugin.synopsis);
+settings.createInfo('info', LOGO, 'Plugin developed by ' + plugin.author + '. \n' + plugin.id + ' ' + plugin.version);
+settings.createDivider('Settings:\n');
+settings.createString('domain', '\u0414\u043e\u043c\u0435\u043d', 'anilibria.tv', function(v) {
+  service.domain = v;
+});
+// settings.createBool('debug', 'Debug', false, function(v) {
+//   service.debug = v;
+// });
+// settings.createBool('Show_META', 'Show more info from thetvdb', true, function(v) {
+//   service.meta = v;
+// });
 
-new page.Route(PREFIX + ":start", function (page) {
+var BASE_URL = service.domain;
+var API_URL = 'https://api.'+ service.domain;
+var COVER_URL = 'https://static-libria.weekstorm.one';
+var DOWNLOAD_URL = 'https://www.'+BASE_URL;
+
+io.httpInspectorCreate('.*libria.*', function(ctrl) {
+  ctrl.setHeader('Accept-Encoding','gzip');
+  ctrl.setHeader('User-Agent', UA);
+  // ctrl.setHeader('mobileApp','true');
+  // ctrl.setHeader('App-Id','ru.radiationx.anilibria.app');
+  // ctrl.setHeader('App-Ver-Code','68');
+  // ctrl.setHeader('App-Ver-Name','2.11.1')
+//  ctrl.setHeader('Referer', ctrl.url);
+});
+
+new page.Route(PREFIX + ":start2", function (page) {
   page.loading = true;
   page.metadata.logo = LOGO;
+  page.metadata.icon = LOGO;
   page.metadata.title = PREFIX;
-  page.model.contents = 'grid';
-  page.type = 'directory';
+  page.model.contents = "grid";
+  page.type = "directory";
   page.entries = 0;
   var nextPage = 1;
 
   function loader() {
-
-    post = {
-      debug: true,
-      caching: true, // Enables Movian's built-in HTTP cache
-      cacheTime: 6000,
-      headers: {
-        "Accept": "*/*",
-        "Referer": "https://www.anilibria.tv/pages/catalog.php",
-        "Origin": "https://www.anilibria.tv",
-        "X-Requested-With": "XMLHttpRequest",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-      },
-      postdata: {
-        page: nextPage,
-        search: '%7B%22year%22%3A%22%22%2C%22genre%22%3A%22%22%2C%22season%22%3A%22%22%7D',
-        xpage: 'catalog',
-        sort: 1,
-        finish: 1
-      }
-    };
-    var resp = http.request('https://www.anilibria.tv/public/catalog.php', post).toString();
-    table = JSON.parse(resp).table;
-
-    dom = html.parse(table).root;
-    list = ScrapeList(dom);
-    populateItemsFromList(page, list);
+    var url = API_URL + '/v3/title/updates?filter=posters,description,code,names,id&page=' + nextPage + '&items_per_page=40';
+    var resp = http.request(url, { caching: true, cacheTime: 6000 }).toString();
+    var json = JSON.parse(resp);
+    var list = json.list;
+    page.entries = 0;
+    list.forEach(function(item) {
+      page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
+        title: item.names.ru,
+        description: item.description,
+        icon: COVER_URL + item.posters.small.url,
+      });
+      page.entries++;
+    });
     nextPage++;
-    page.haveMore(list.endOfData !== undefined && !list.endOfData);
+    page.haveMore(nextPage <= json.pagination.pages);
   }
 
   loader();
@@ -75,70 +92,133 @@ new page.Route(PREFIX + ":start", function (page) {
   page.asyncPaginator = loader;
 });
 
-// movie page
-new page.Route(PREFIX + ':moviepage:(.*)', function (page, data) {
-  data = JSON.parse(data);
-  page.type = 'directory';
-  page.metadata.title = PREFIX + '|' + data.title;
+new page.Route(PREFIX + ":start", function (page) {
+  page.loading = true;
+  page.metadata.logo = LOGO;
   page.metadata.icon = LOGO;
+  page.metadata.title = PREFIX;
+  page.model.contents = "grid";
+  page.type = "directory";
+  
+  var params = { filter: 'posters,description,code,names,id', items_per_page: '40', page: 1}
+  //params.items_per_page = 40;
+  //var offset = 0; 
+  function loader() {
+    
+    asyncRequest('title/updates', params, page, function(result) {
+      if (result.pagination.pages == params.page){
+        page.haveMore(false);
+        return;
+      }
 
-  resp = http.request(data.url).toString();
-  dom = html.parse(resp).root;
-  title = dom.getElementByClassName('release-title')[0].textContent.split('/');
-  title_ru = title[0].trim();
-  title_en = (title.length == 2)?title[1].trim() : title[0].trim();
+      // if(result.list && result.pagination.total_items === 0) {
+      //   showNoContent(page);
+      //   return;
+      // }
+      var list = result.list;
+      page.entries = 0;
+      //for (var i = 0; i < 20; i++) {
+      for (var i = 0; i < list.length; i++) {
+       
+        //var item = list[offset + i];
+        var item = list[i]; 
+        //console.log(JSON.stringify(item, null, 4));
+        page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
+          title: item.names.ru,
+          description: item.description,
+          icon: COVER_URL + item.posters.small.url,
+        });
+        page.entries++;
+      }
+      params.page++
+   
+      print(params.page <= result.pagination.pages);
+      page.haveMore(params.page <= result.pagination.pages);
+      //offset += 20;
+      //if(offset == 40) offset = 0;
+      //page.haveMore(true);
 
-  //https://www.anilibria.tv/public/iframe.php?id=8447
-  regexp = /http[\s\S]{0,30}public\/iframe\.php\?id=\d+/;
-  if (libra = (regexp.exec(resp) || [])[0]) {
-    page.appendItem('', 'separator', {
-      title: 'anilibra:'
     });
-    data.url = libra;
-    libra = http.request(data.url).toString();
-    eval('file=' + /file:(\[.*\])\,/gm.exec(resp)[1]);
-    for (i in file) {
-      console.log(undefined == title_en);
-      data.links = file[i];
-      page.appendItem(PREFIX + ':play:' + JSON.stringify(data), 'video', {
-        title: file[i].title,
-        icon: data.icon,
-      }).bindVideoMetadata({
-        title: (undefined == title_en ? title_ru : title_en) + ' S01' + 'E' + fix_0(file[i].title.match(/\d+/)[0])
+  }
+
+  loader();
+  page.asyncPaginator = loader;
+  page.loading = false;
+});
+
+
+
+new page.Route(PREFIX + ":moviepage:(.*)", function (page, code) {
+  var code = JSON.parse(code);
+  //https://github.com/anilibria/docs/blob/master/api_v3.md#-title
+  ///v3/title?code=kizumonogatari-iii-reiketsu-hen
+  var url = API_URL + '/v3/title?code='+code;
+  opts = {
+    debug: true,
+    caching: true, // Enables Movian's built-in HTTP cache
+    cacheTime: 6000,
+    // headers: {
+    //   "Accept": "*/*",
+    //   // "Referer": "https://www.anilibria.tv/pages/catalog.php",
+    //   // "Origin": "https://www.anilibria.tv",
+    //   // "X-Requested-With": "XMLHttpRequest",
+    //   // "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
+    //   // "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+    // },
+  }
+  var resp = http.request(url,opts).toString();
+  var json = JSON.parse(resp);
+  page.type = "directory";
+  page.metadata.title = json.names.en;
+  page.metadata.icon = LOGO;
+  page.metadata.logo = COVER_URL+json.posters.small.url;
+  
+  page.appendItem('', 'separator', {title: 'Anilibria:',});
+  
+  for (i in json.player.list) {
+    var item = json.player.list[i];
+    item.host = json.player.host; 
+   
+    page.appendItem(PREFIX + ':play:' + JSON.stringify(item), 'video', {
+      title: 'Episode '+ item.episode,
+      icon: COVER_URL+json.posters.small.url,
+    }).bindVideoMetadata({title: json.names.en + ' S01' + 'E' + fix_0(item.episode),});
+  }
+
+  //franchises
+  if (json.franchises.length) {
+   page.appendItem("", "separator", {
+    title: "franchises:",
+  });
+
+  for (i in json.franchises[0].releases) {
+    var item = json.franchises[0].releases[i];
+     
+    page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
+      title: item.names.ru,
+      description: item.description,
+      icon: COVER_URL + json.posters.small.url,
+    });
+ }
+
+  }
+
+  //if (torrent.length) {
+    page.appendItem("", "separator", {
+      title: "torrent/magnet:",
+    });
+
+    for (i in json.torrents.list) {
+      var item = json.torrents.list[i];
+       
+      //https://www.anilibria.tv/public/torrent/download.php?id=28107
+      page.appendItem("torrent:browse:" + DOWNLOAD_URL +item.url, "directory", {
+        title: 'T: '+'['+item.quality.string+'] ' + item.size_string+' S:'+item.seeders+' L:'+item.leechers,
       });
-    }
-  };
-
-  regexp = /http[\s\S]{0,60}video\/[a-f0-9]{16}\/iframe|http[\s\S]{0,60}[a-f0-9]{32}\/iframe|http[\s\S]{0,60}serial\/[a-f0-9]{32}\/iframe/;
-  if (moon = (regexp.exec(resp) || [])[0]) {
-    page.appendItem('', 'separator', {
-      title: 'moonwalk:'
-    });
-    data.url = moon;
-    page.appendItem('HDRezka:moviepage:' + JSON.stringify(data), 'directory', {
-      title: data.title,
-      icon: data.icon,
-    });
-  };
-
-
-  torrent = dom.getElementByClassName('download-torrent');
-  if (torrent.length) {
-    page.appendItem('', 'separator', {
-      title: 'torrent:'
-    });
-
-    var regex = /(.*?)(B)  (\d+)\W+(\d+)\W+(\d+)(Добавлен \d+\.\d+\.\d+).*/gm;
-    torrent[0].getElementByTagName('tr').forEach(function (item) {
-      url = 'https://www.anilibria.tv' + item.getElementByTagName('a')[0].attributes.getNamedItem('href').value;
-      page.appendItem('torrent:browse:' + url, 'directory', {
-        title: item.textContent.replace(regex, '$6 $1$2 S:$3 P:$4'),
-        icon: data.icon,
+      page.appendItem("torrent:browse:" + item.magnet, "directory", {
+        title: 'M: '+'['+item.quality.string+'] ' + item.size_string+' S:'+item.seeders+' L:'+item.leechers,
       });
-    });
-
-  };
-
+   }
 });
 
 page.Searcher(PREFIX + " - Result", LOGO, function (page, query) {
@@ -149,7 +229,7 @@ page.Searcher(PREFIX + " - Result", LOGO, function (page, query) {
   page.metadata.icon = LOGO;
   page.metadata.logo = LOGO;
   page.metadata.title = PREFIX + " - Search results for: " + query;
-  page.type = 'directory';
+  page.type = "directory";
   page.loading = true;
   page.entries = 0;
 
@@ -158,54 +238,53 @@ page.Searcher(PREFIX + " - Result", LOGO, function (page, query) {
     caching: true, // Enables Movian's built-in HTTP cache
     cacheTime: 6000,
     headers: {
-      "Accept": "*/*",
+      "Accept-Encoding":"gzip",
+      "App-Id":"ru.radiationx.anilibria.app",
+      "App-Ver-Code":68,
+      "App-Ver-Name":"2.11.1",
+      "Host":"www.anilibria.tv",
+      "mobileApp":true,
+      "User-Agent":"mobileApp Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36 OPR/53.0.2907.68",
       "Referer": "https://www.anilibria.tv",
       "Origin": "https://www.anilibria.tv",
       "X-Requested-With": "XMLHttpRequest",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     },
     postdata: {
+      query: 'search',
       search: query,
-      small: 1
-    }
+      filter: 'id,code,names,poster',
+    },
   };
-  var resp = http.request('https://www.anilibria.tv/public/search.php', post).toString();
+  var resp = http.request("https://www."+BASE_URL+"/public/api/index.php", post).toString();
+  print(resp);
 
-  content = JSON.parse(resp).mes;
-  content = html.parse(content).root;
-  if ((elements = content.getElementByTagName('a'))) {
-    for (i = 0; i < elements.length; i++) {
-      element = elements[i];
-      data = {
-        url: 'https://www.anilibria.tv' + element.attributes.getNamedItem('href').value,
-        title: element.textContent,
-      }
-      page.appendItem(PREFIX + ':moviepage:' + JSON.stringify(data), 'video', {
-        title: data.title,
+  json = JSON.parse(resp);
+  for(i in json.data){
+    var data = json.data[i];
+      page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(data.code), "video", {
+        title: data.names[0],
+        icon: COVER_URL+data.poster 
+
       });
       page.entries++;
     }
-  }
+  
   page.loading = false;
 });
 
 new page.Route(PREFIX + ":play:(.*)", function (page, data) {
   data = JSON.parse(data);
   page.loading = true;
-  page.type = 'directory';
+  page.type = "directory";
   page.metadata.logo = LOGO;
   page.metadata.title = data.title;
 
-  page.appendItem(data.links.download, 'video', {
-    title: "[MP4] " + data.title + ' ' + data.links.title,
-    icon: data.icon
-  });
-
-  file = data.links.file.split(',')
+  file = data.hls;
   for (i in file) {
-    page.appendItem('hls:http:' + file[i].replace(/(\[.*\])(.*)/gm, '$2'), 'video', {
-      title: '[HLS]-' + file[i].replace(/(\[.*\])(.*)/gm, '$1') + ' ' + data.title + ' ' + data.links.title,
+    page.appendItem("hls:http://" + data.host+file[i],"video",
+    {
+      title:"[HLS]-" + i.replace('fhd','1080').replace('hd','720').replace('sd','480') +'-'+(data.name !== null? data.name : 'Episode '+ fix_0(data.episode)), 
       icon: data.icon,
     });
   }
@@ -213,41 +292,41 @@ new page.Route(PREFIX + ":play:(.*)", function (page, data) {
   page.loading = false;
 });
 
-function ScrapeList(dom) {
-  var returnValue = [];
-  //document.getElementById('dle-content');
-  content = dom;
-  if ((elements = content.getElementByTagName('a'))) {
-    for (i = 0; i < elements.length; i++) {
-      element = elements[i];
-      console.log(element.getElementByTagName('img')[0].attributes.getNamedItem('src').value)
-      returnValue.push({
-        //content.getElementsByClassName('movie-item short-item')[0].getElementsByTagName('a')[0].href
-        url: 'https://www.anilibria.tv' + element.attributes.getNamedItem('href').value,
-        icon: element.getElementByTagName('img')[0].attributes.getNamedItem('src').value,
-        title: element.getElementByClassName('anime_name')[0].textContent,
-        tag: element.getElementByClassName('anime_number')[0].textContent,
-        description: element.getElementByClassName('anime_description')[0].textContent,
-      })
+function fix_0(n) { return (n < 10 ? '0' : '') + n; }
+
+
+//    var resp = http.request('https://api.'+BASE_URL+'/v3/title/updates?filter=posters,description,code,names,id&page=' + nextPage + '&items_per_page=40',opts).toString();
+
+
+// title/updates
+function asyncRequest(endpoint, params, page, cb) {
+  var URL = API_URL +'/v3/' + endpoint;
+  var opts = {
+    args: [params || {}],
+    noFail: true,
+    compression: true,
+    caching: true,
+    cacheTime: 6000,
+    debug: true
+  };
+  http.request(URL, opts, function(err, result) {
+    if(err) {
+      page && page.error(err);
+    } else {
+      try {
+        var r = JSON.parse(result);
+        if(r.error) {
+          console.error("Request failed: " + URL);
+          console.error(r.error.errors[0].message);
+          page && page.error(r.error.errors[0].reason);
+          throw(new Error("Request failed: " + r.error.errors[0].reason));
+        }
+        cb(r);
+      } catch(e) {
+        page && page.error(e);
+        throw(e);
+      }
     }
-  }
-  //todo
-  returnValue.endOfData = 0 //!dom.getElementByClassName("pnext")[0].getElementByTagName("a").length;
-  return returnValue;
-};
-
-function populateItemsFromList(page, list) {
-  page.entries = 0;
-  for (i = 0; i < list.length; i++) {
-    page.appendItem(PREFIX + ':moviepage:' + JSON.stringify(list[i]), 'video', {
-      title: list[i].title,
-      description: list[i].description,
-      icon: list[i].icon,
-    });
-    page.entries++;
-  }
-};
-
-function fix_0(num) {
-  return ('0' + (num || '')).slice(-3);
-};
+    page && (page.loading = false);
+  });
+}

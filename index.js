@@ -1,4 +1,23 @@
 /**
+ *  anilibra.tv plugin for Movian
+ *
+ *  Copyright (C) 2019-2025 Buksa
+ *
+ *  This program is free software": "you can redistribute it and/or modif,
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
  * Anilibria.tv plugin for Movian
  * Refactored for Duktape 1.8.0 compatibility
  */
@@ -322,7 +341,7 @@ var pageBuilders = {
     this.addEpisodes(page, releaseData);
     this.addTorrents(page, releaseData);
     this.addFranchise(page, franchiseData, releaseData.id);
-    this.addTeamMembers(page, releaseData);
+    //this.addTeamMembers(page, releaseData);
   },
 
   /**
@@ -428,6 +447,27 @@ var pageBuilders = {
       title: franchiseTitle
     });
 
+                // Общая информация о франшизе
+                var franchiseInfo = [];
+                if(franchise.first_year && franchise.last_year) {
+                  franchiseInfo.push(franchise.first_year + '-' + franchise.last_year);
+                }
+                if(franchise.total_releases) {
+                  franchiseInfo.push(franchise.total_releases + ' релизов');
+                }
+                if(franchise.total_episodes) {
+                  franchiseInfo.push(franchise.total_episodes + ' эпизодов');
+                }
+                if(franchise.total_duration) {
+                  franchiseInfo.push(franchise.total_duration);
+                }
+                
+                if(franchiseInfo.length > 0) {
+                  page.appendItem('', 'separator', {
+                    title: franchiseInfo.join(' | ')
+                  });
+                }
+
     for (var i = 0; i < otherReleases.length; i++) {
       var release = otherReleases[i].release;
       var releaseInfo = [];
@@ -441,13 +481,16 @@ var pageBuilders = {
         title += ' (' + release.name.english + ')';
       }
 
-      page.appendItem(PREFIX + ':moviepage:' + release.id, 'directory', {
+      page.appendItem(PREFIX + ':moviepage:' + release.id, 'list', {
         title: title,
         description: releaseInfo.join(' | '),
-        icon: 'https://aniliberty.top' + (release.poster.thumbnail || release.poster.preview)
+        icon: config.coverUrl + (release.poster.preview || release.poster.src)
       });
     }
   },
+
+
+  
 
   /**
    * Adds team members involved in the release to a Movian page.
@@ -471,10 +514,7 @@ var pageBuilders = {
   }
 };
 
-// === INITIALIZATION ===
-// The commented-out 'initialize' function suggests a potential for a dedicated setup function,
-// but the functionality is currently executed directly.
-function initialize() {
+
  console.error(plugin.id + ' ' + plugin.version + ' initialized');
 
 /**
@@ -505,7 +545,7 @@ io.httpInspectorCreate('.*libria.*', function(ctrl) {
   ctrl.setHeader('Accept-Encoding', 'gzip');
   ctrl.setHeader('User-Agent', UA);
 });
-}
+
 
 
 // === ROUTE HANDLERS ===
@@ -656,7 +696,3 @@ new page.Route(PREFIX + ':play:(.*)', function(page, data) {
 
   page.loading = false;
 });
-
-// // === START ===
-// The 'initialize' function call is commented out, meaning the setup code runs directly.
- initialize();

@@ -1,332 +1,662 @@
 /**
- *  anilibra.tv plugin for Movian
- *
- *  Copyright (C) 2019 Buksa
- *
- *  This program is free software": "you can redistribute it and/or modif,
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * Anilibria.tv plugin for Movian
+ * Refactored for Duktape 1.8.0 compatibility
  */
 
-var plugin = JSON.parse(Plugin.manifest);
-var PREFIX = plugin.id;
-var LOGO = Plugin.path + plugin.icon;
-var io = require('native/io');
+// === IMPORTS ===
+var page = require('movian/page');
 var service = require('movian/service');
 var settings = require('movian/settings');
-var page = require("movian/page");
-var http = require("movian/http");
+var http = require('movian/http');
+var io = require('native/io');
+
+// === CONSTANTS ===
+/**
+ * Plugin manifest data.
+ * @type {object}
+ * @property {string} id - The plugin ID.
+ * @property {string} icon - The path to the plugin icon.
+ */
+var plugin = JSON.parse(Plugin.manifest);
+/**
+ * Prefix for Movian routes, based on the plugin ID.
+ * @type {string}
+ */
+var PREFIX = plugin.id;
+/**
+ * Path to the plugin's logo.
+ * @type {string}
+ */
+var LOGO = Plugin.path + plugin.icon;
+/**
+ * User-Agent string to be used for HTTP requests.
+ * @type {string}
+ */
 var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-console.error(plugin.id + ' ' + plugin.version);
 
-// Create the service (ie, icon on home screen)
-service.create(plugin.title, PREFIX + ':start', 'video', true, LOGO);
-settings.globalSettings(plugin.id, plugin.title, LOGO, plugin.synopsis);
-settings.createInfo('info', LOGO, 'Plugin developed by ' + plugin.author + '. \n' + plugin.id + ' ' + plugin.version);
-settings.createDivider('Settings:\n');
-settings.createString('domain', '\u0414\u043e\u043c\u0435\u043d', 'anilibria.tv', function(v) {
-  service.domain = v;
-});
-// settings.createBool('debug', 'Debug', false, function(v) {
-//   service.debug = v;
-// });
-// settings.createBool('Show_META', 'Show more info from thetvdb', true, function(v) {
-//   service.meta = v;
-// });
+// === CONFIGURATION ===
+/**
+ * Configuration object for the plugin.
+ * @type {object}
+ * @property {string} baseUrl - The base URL for Anilibria.tv.
+ * @property {string} apiUrl - The API URL for Anilibria.tv.
+ * @property {string} coverUrl - The base URL for cover images.
+ * @property {number} pageSize - The number of items per page in listings.
+ * @property {number} [cacheTime] - The cache time for HTTP requests in milliseconds (currently commented out).
+ */
+var config = {
+  baseUrl: 'anilibria.tv',
+  apiUrl: 'https://aniliberty.top/api/v1',
+  coverUrl: 'https://static-libria.weekstorm.one',
+  pageSize: 25,
+  //cacheTime: 6000
+};
 
-var BASE_URL = service.domain;
-var API_URL = 'https://api.'+ service.domain;
-var COVER_URL = 'https://static-libria.weekstorm.one';
-var DOWNLOAD_URL = 'https://www.'+BASE_URL;
+// === UTILITIES ===
+/**
+ * Collection of utility functions.
+ * @namespace utils
+ */
+var utils = {
+  /**
+   * Formats a duration in seconds into a human-readable string (e.g., "X мин Y сек").
+   * @param {number} seconds - The duration in seconds.
+   * @returns {string} The formatted duration string.
+   */
+  formatDuration: function(seconds) {
+    if (!seconds) return '';
+    var minutes = Math.floor(seconds / 60);
+    var secs = seconds % 60;
+    return minutes + ' мин ' + secs + ' сек';
+  },
 
-io.httpInspectorCreate('.*libria.*', function(ctrl) {
-  ctrl.setHeader('Accept-Encoding','gzip');
-  ctrl.setHeader('User-Agent', UA);
-  // ctrl.setHeader('mobileApp','true');
-  // ctrl.setHeader('App-Id','ru.radiationx.anilibria.app');
-  // ctrl.setHeader('App-Ver-Code','68');
-  // ctrl.setHeader('App-Ver-Name','2.11.1')
-//  ctrl.setHeader('Referer', ctrl.url);
-});
+  /**
+   * Formats a size in bytes into a human-readable string (e.g., "X.Y MB").
+   * @param {number} bytes - The size in bytes.
+   * @returns {string} The formatted size string.
+   */
+  formatSize: function(bytes) {
+    if (!bytes) return '';
+    var units = ['B', 'KB', 'MB', 'GB'];
+    var size = bytes;
+    var unitIndex = 0;
 
-new page.Route(PREFIX + ":start2", function (page) {
-  page.loading = true;
-  page.metadata.logo = LOGO;
-  page.metadata.icon = LOGO;
-  page.metadata.title = PREFIX;
-  page.model.contents = "grid";
-  page.type = "directory";
-  page.entries = 0;
-  var nextPage = 1;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
 
-  function loader() {
-    var url = API_URL + '/v3/title/updates?filter=posters,description,code,names,id&page=' + nextPage + '&items_per_page=40';
-    var resp = http.request(url, { caching: true, cacheTime: 6000 }).toString();
-    var json = JSON.parse(resp);
-    var list = json.list;
-    page.entries = 0;
-    list.forEach(function(item) {
-      page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
-        title: item.names.ru,
-        description: item.description,
-        icon: COVER_URL + item.posters.small.url,
-      });
-      page.entries++;
-    });
-    nextPage++;
-    page.haveMore(nextPage <= json.pagination.pages);
+    return size.toFixed(1) + ' ' + units[unitIndex];
+  },
+
+  /**
+   * Pads a number with a leading zero if it's less than 10.
+   * @param {number} n - The number to pad.
+   * @returns {string|number} The padded number as a string, or the original number if not padded.
+   */
+  padZero: function(n) {
+    return (n < 10 ? '0' : '') + n;
+  },
+
+  /**
+   * Builds a URL by appending an endpoint and optionally adding query parameters.
+   * @param {string} endpoint - The API endpoint.
+   * @param {object} [params] - An object containing query parameters.
+   * @returns {string} The constructed URL.
+   */
+  buildUrl: function(endpoint, params) {
+    var url = config.apiUrl + endpoint;
+    if (params) {
+      var queryString = [];
+      for (var key in params) {
+        if (params.hasOwnProperty(key)) {
+          queryString.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+        }
+      }
+      if (queryString.length > 0) {
+        url += '?' + queryString.join('&');
+      }
+    }
+    return url;
+  },
+
+  /**
+   * Extends a target object with properties from a source object.
+   * @param {object} target - The object to extend.
+   * @param {object} source - The object whose properties will be copied.
+   * @returns {object} The extended target object.
+   */
+  extend: function(target, source) {
+    for (var key in source) {
+      if (source.hasOwnProperty(key)) {
+        target[key] = source[key];
+      }
+    }
+    return target;
   }
+};
 
-  loader();
+// === API CLIENT ===
+/**
+ * API client for interacting with the Anilibria API.
+ * @namespace apiClient
+ */
+var apiClient = {
+  /**
+   * Default headers to be sent with API requests.
+   * @type {object}
+   */
+  defaultHeaders: {
+    'Accept': 'application/json',
+    'User-Agent': UA,
+    'Content-Type': 'application/json',
+    'Content-encoding': 'br'
+  },
 
-  page.loading = false;
-  page.asyncPaginator = loader;
-});
+  /**
+   * Makes an HTTP request to the Anilibria API.
+   * @param {string} url - The URL to request.
+   * @param {object} [options] - Options for the HTTP request (e.g., method, headers, postdata).
+   * @param {function(Error|null, object|null)} callback - The callback function to handle the response.
+   */
+  request: function(url, options, callback) {
+    var requestOptions = {
+      method: 'GET',
+      headers: utils.extend({}, this.defaultHeaders),
+      caching: true,
+      cacheTime: config.cacheTime // Note: config.cacheTime is currently commented out in config
+    };
 
-new page.Route(PREFIX + ":start", function (page) {
-  page.loading = true;
-  page.metadata.logo = LOGO;
-  page.metadata.icon = LOGO;
-  page.metadata.title = PREFIX;
-  page.model.contents = "grid";
-  page.type = "directory";
-  
-  var params = { filter: 'posters,description,code,names,id', items_per_page: '40', page: 1}
-  //params.items_per_page = 40;
-  //var offset = 0; 
-  function loader() {
-    
-    asyncRequest('title/updates', params, page, function(result) {
-      if (result.pagination.pages == params.page){
-        page.haveMore(false);
+    if (options) {
+      utils.extend(requestOptions, options);
+      if (options.headers) {
+        utils.extend(requestOptions.headers, options.headers);
+      }
+    }
+
+    http.request(url, requestOptions, function(error, response) {
+      if (error) {
+        console.error('API request failed:', error);
+        callback(error, null);
         return;
       }
 
-      // if(result.list && result.pagination.total_items === 0) {
-      //   showNoContent(page);
-      //   return;
-      // }
-      var list = result.list;
-      page.entries = 0;
-      //for (var i = 0; i < 20; i++) {
-      for (var i = 0; i < list.length; i++) {
-       
-        //var item = list[offset + i];
-        var item = list[i]; 
-        //console.log(JSON.stringify(item, null, 4));
-        page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
-          title: item.names.ru,
-          description: item.description,
-          icon: COVER_URL + item.posters.small.url,
-        });
-        page.entries++;
+      if (response.statuscode !== 200) {
+        var err = new Error('HTTP ' + response.statuscode);
+        callback(err, null);
+        return;
       }
-      params.page++
-   
-      print(params.page <= result.pagination.pages);
-      page.haveMore(params.page <= result.pagination.pages);
-      //offset += 20;
-      //if(offset == 40) offset = 0;
-      //page.haveMore(true);
 
+      try {
+        var data = JSON.parse(response.toString());
+        console.log(data); // Log the response data
+        callback(null, data);
+      } catch (parseError) {
+        callback(parseError, null);
+      }
     });
-  }
+  },
 
-  loader();
-  page.asyncPaginator = loader;
-  page.loading = false;
-});
+  /**
+   * Searches for anime based on a query.
+   * @param {string} query - The search query.
+   * @param {function(Error|null, object|null)} callback - The callback function to handle the search results.
+   */
+  searchAnime: function(query, callback) {
+    var url = 'https://www.' + config.baseUrl + '/public/api/index.php';
+    var options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      postdata: {
+        query: 'search',
+        search: query,
+        filter: 'id,code,names,poster'
+      }
+    };
 
+    this.request(url, options, callback);
+  },
 
-
-new page.Route(PREFIX + ":moviepage:(.*)", function (page, code) {
-  var code = JSON.parse(code);
-  //https://github.com/anilibria/docs/blob/master/api_v3.md#-title
-  ///v3/title?code=kizumonogatari-iii-reiketsu-hen
-  var url = API_URL + '/v3/title?code='+code;
-  opts = {
-    debug: true,
-    caching: true, // Enables Movian's built-in HTTP cache
-    cacheTime: 6000,
-    // headers: {
-    //   "Accept": "*/*",
-    //   // "Referer": "https://www.anilibria.tv/pages/catalog.php",
-    //   // "Origin": "https://www.anilibria.tv",
-    //   // "X-Requested-With": "XMLHttpRequest",
-    //   // "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.81 Safari/537.36",
-    //   // "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-    // },
-  }
-  var resp = http.request(url,opts).toString();
-  var json = JSON.parse(resp);
-  page.type = "directory";
-  page.metadata.title = json.names.en;
-  page.metadata.icon = LOGO;
-  page.metadata.logo = COVER_URL+json.posters.small.url;
-  
-  page.appendItem('', 'separator', {title: 'Anilibria:',});
-  
-  for (i in json.player.list) {
-    var item = json.player.list[i];
-    item.host = json.player.host; 
-   
-    page.appendItem(PREFIX + ':play:' + JSON.stringify(item), 'video', {
-      title: 'Episode '+ item.episode,
-      icon: COVER_URL+json.posters.small.url,
-    }).bindVideoMetadata({title: json.names.en + ' S01' + 'E' + fix_0(item.episode),});
-  }
-
-  //franchises
-  if (json.franchises.length) {
-   page.appendItem("", "separator", {
-    title: "franchises:",
-  });
-
-  for (i in json.franchises[0].releases) {
-    var item = json.franchises[0].releases[i];
-     
-    page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(item.code),"video", { 
-      title: item.names.ru,
-      description: item.description,
-      icon: COVER_URL + json.posters.small.url,
-    });
- }
-
-  }
-
-  //if (torrent.length) {
-    page.appendItem("", "separator", {
-      title: "torrent/magnet:",
+  /**
+   * Retrieves a catalog of anime releases.
+   * @param {number} pageNum - The page number to retrieve.
+   * @param {function(Error|null, object|null)} callback - The callback function to handle the catalog data.
+   */
+  getCatalog: function(pageNum, callback) {
+    var url = utils.buildUrl('/anime/catalog/releases', {
+      limit: config.pageSize,
+      'f[sorting]': 'FRESH_AT_DESC',
+      page: pageNum || 1
     });
 
-    for (i in json.torrents.list) {
-      var item = json.torrents.list[i];
-       
-      //https://www.anilibria.tv/public/torrent/download.php?id=28107
-      page.appendItem("torrent:browse:" + DOWNLOAD_URL +item.url, "directory", {
-        title: 'T: '+'['+item.quality.string+'] ' + item.size_string+' S:'+item.seeders+' L:'+item.leechers,
-      });
-      page.appendItem("torrent:browse:" + item.magnet, "directory", {
-        title: 'M: '+'['+item.quality.string+'] ' + item.size_string+' S:'+item.seeders+' L:'+item.leechers,
-      });
-   }
-});
+    this.request(url, {}, callback);
+  },
 
-page.Searcher(PREFIX + " - Result", LOGO, function (page, query) {
-  page.metadata.icon = LOGO;
+  /**
+   * Retrieves details for a specific anime release.
+   * @param {string} id - The ID of the anime release.
+   * @param {function(Error|null, object|null)} callback - The callback function to handle the release data.
+   */
+  getRelease: function(id, callback) {
+    var url = utils.buildUrl('/anime/releases/' + id);
+    this.request(url, {}, callback);
+  },
 
-  page.entries = 0;
-  //new page.Route(PREFIX + ":search:(.*)", function (page, query) {
-  page.metadata.icon = LOGO;
-  page.metadata.logo = LOGO;
-  page.metadata.title = PREFIX + " - Search results for: " + query;
-  page.type = "directory";
-  page.loading = true;
-  page.entries = 0;
+  /**
+   * Retrieves franchise information for a given release.
+   * @param {string} id - The ID of the anime release.
+   * @param {function(Error|null, object|null)} callback - The callback function to handle the franchise data.
+   */
+  getFranchise: function(id, callback) {
+    var url = utils.buildUrl('/anime/franchises/release/' + id);
+    this.request(url, {}, function(error, data) {
+      // Franchise might be missing, which is not critical
+      callback(null, error ? null : data);
+    });
+  }
+};
 
-  post = {
-    debug: true,
-    caching: true, // Enables Movian's built-in HTTP cache
-    cacheTime: 6000,
-    headers: {
-      "Accept-Encoding":"gzip",
-      "App-Id":"ru.radiationx.anilibria.app",
-      "App-Ver-Code":68,
-      "App-Ver-Name":"2.11.1",
-      "Host":"www.anilibria.tv",
-      "mobileApp":true,
-      "User-Agent":"mobileApp Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.170 Safari/537.36 OPR/53.0.2907.68",
-      "Referer": "https://www.anilibria.tv",
-      "Origin": "https://www.anilibria.tv",
-      "X-Requested-With": "XMLHttpRequest",
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    },
-    postdata: {
-      query: 'search',
-      search: query,
-      filter: 'id,code,names,poster',
-    },
-  };
-  var resp = http.request("https://www."+BASE_URL+"/public/api/index.php", post).toString();
-  print(resp);
+// === PAGE BUILDERS ===
+/**
+ * Functions responsible for building Movian pages.
+ * @namespace pageBuilders
+ */
+var pageBuilders = {
+  /**
+   * Builds the search results page.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} results - The search results data.
+   */
+  buildSearchResults: function(page, results) {
+    console.error(results.data.length); // Log the number of results
 
-  json = JSON.parse(resp);
-  for(i in json.data){
-    var data = json.data[i];
-      page.appendItem(PREFIX + ":moviepage:" + JSON.stringify(data.code), "video", {
-        title: data.names[0],
-        icon: COVER_URL+data.poster 
+    if (!results.data) return;
 
+    for (var i = 0; i < results.data.length; i++) {
+      var item = results.data[i];
+      console.error(item.id) // Log the item ID
+      page.appendItem(PREFIX + ':moviepage:' + item.id, 'video', {
+        title: item.names[0],
+        icon: config.coverUrl + item.poster
       });
       page.entries++;
     }
-  
-  page.loading = false;
+  },
+
+  /**
+   * Builds a catalog page of anime releases.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} data - The catalog data.
+   */
+  buildCatalogPage: function(page, data) {
+    if (!data.data || data.data.length === 0) {
+      page.appendItem('', 'separator', {
+        title: 'Нет данных для отображения'
+      });
+      return;
+    }
+
+    for (var i = 0; i < data.data.length; i++) {
+      var item = data.data[i];
+      page.appendItem(PREFIX + ':moviepage:' + item.id, 'video', {
+        title: item.name.main,
+        description: item.description || 'Описание отсутствует',
+        icon: config.coverUrl + (item.poster.preview || item.poster.src),
+        year: item.year,
+        age_rating: item.age_rating ? item.age_rating.label : undefined
+      });
+    }
+  },
+
+  /**
+   * Builds a detailed release page, including episodes, torrents, franchise info, and team members.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} releaseData - The data for the specific anime release.
+   * @param {object} franchiseData - The franchise data for the release.
+   */
+  buildReleasePage: function(page, releaseData, franchiseData) {
+    this.setPageMetadata(page, releaseData);
+    this.addEpisodes(page, releaseData);
+    this.addTorrents(page, releaseData);
+    this.addFranchise(page, franchiseData, releaseData.id);
+    this.addTeamMembers(page, releaseData);
+  },
+
+  /**
+   * Sets the metadata for a Movian page based on release data.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} data - The release data.
+   */
+  setPageMetadata: function(page, data) {
+    page.type = 'directory';
+    page.metadata.title = data.name.main;
+    page.metadata.subtitle = data.name.english || '';
+    page.metadata.icon = LOGO;
+    page.metadata.logo = config.coverUrl + (data.poster.preview || data.poster.src);
+  },
+
+  /**
+   * Adds episode listings to a Movian page.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} data - The release data containing episode information.
+   */
+  addEpisodes: function(page, data) {
+    if (!data.episodes || data.episodes.length === 0) return;
+
+    page.appendItem('', 'separator', {
+      title: 'Эпизоды:'
+    });
+
+    for (var i = 0; i < data.episodes.length; i++) {
+      var episode = data.episodes[i];
+      var episodeTitle = data.name.english + ' S01E' + utils.padZero(episode.ordinal);
+      var episodeData = {
+        id: data.id,
+        ordinal: episode.ordinal,
+        title: episodeTitle,
+        hls_480: episode.hls_480,
+        hls_720: episode.hls_720,
+        hls_1080: episode.hls_1080,
+        duration: episode.duration
+      };
+
+      var item = page.appendItem(
+        PREFIX + ':play:' + JSON.stringify(episodeData),
+        'video', {
+          title: episodeTitle,
+          description: 'Длительность: ' + utils.formatDuration(episode.duration)
+        }
+      );
+
+      item.bindVideoMetadata({
+        title: episodeTitle
+      });
+    }
+  },
+
+  /**
+   * Adds torrent listings to a Movian page.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} data - The release data containing torrent information.
+   */
+  addTorrents: function(page, data) {
+    if (!data.torrents || data.torrents.length === 0) return;
+
+    page.appendItem('', 'separator', {
+      title: 'Торренты:'
+    });
+
+    for (var i = 0; i < data.torrents.length; i++) {
+      var torrent = data.torrents[i];
+      page.appendItem('torrent:browse:' + torrent.magnet, 'list', {
+        title: torrent.label + ' ' + utils.formatSize(torrent.size) + ' | S: ' + torrent.seeders + ' | L: ' + torrent.leechers,
+        description: 'Размер: ' + utils.formatSize(torrent.size) + ' | Сиды: ' + torrent.seeders + ' | Личи: ' + torrent.leechers
+      });
+    }
+  },
+
+  /**
+   * Adds franchise-related releases to a Movian page.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} franchiseData - The franchise data.
+   * @param {string} currentId - The ID of the current release to exclude from the list.
+   */
+  addFranchise: function(page, franchiseData, currentId) {
+    if (!franchiseData || franchiseData.length === 0) return;
+
+    var franchise = franchiseData[0];
+    var otherReleases = [];
+
+    for (var i = 0; i < franchise.franchise_releases.length; i++) {
+      var release = franchise.franchise_releases[i];
+      if (release.release.id != currentId) {
+        otherReleases.push(release);
+      }
+    }
+
+    if (otherReleases.length === 0) return;
+
+    var franchiseTitle = 'Франшиза: ' + franchise.name;
+    if (franchise.name_english) {
+      franchiseTitle += ' (' + franchise.name_english + ')';
+    }
+
+    page.appendItem('', 'separator', {
+      title: franchiseTitle
+    });
+
+    for (var i = 0; i < otherReleases.length; i++) {
+      var release = otherReleases[i].release;
+      var releaseInfo = [];
+
+      if (release.year) releaseInfo.push(release.year);
+      if (release.type && release.type.description) releaseInfo.push(release.type.description);
+      if (release.season && release.season.description) releaseInfo.push(release.season.description);
+
+      var title = release.name.main;
+      if (release.name.english) {
+        title += ' (' + release.name.english + ')';
+      }
+
+      page.appendItem(PREFIX + ':moviepage:' + release.id, 'directory', {
+        title: title,
+        description: releaseInfo.join(' | '),
+        icon: 'https://aniliberty.top' + (release.poster.thumbnail || release.poster.preview)
+      });
+    }
+  },
+
+  /**
+   * Adds team members involved in the release to a Movian page.
+   * @param {MovianPage} page - The Movian page object.
+   * @param {object} data - The release data containing team members information.
+   */
+  addTeamMembers: function(page, data) {
+    if (!data.members || data.members.length === 0) return;
+
+    page.appendItem('', 'separator', {
+      title: 'Команда (' + data.members.length + ')'
+    });
+
+    for (var i = 0; i < data.members.length; i++) {
+      var member = data.members[i];
+      page.appendItem('', 'separator', {
+        title: member.nickname,
+        description: member.role.description
+      });
+    }
+  }
+};
+
+// === INITIALIZATION ===
+// The commented-out 'initialize' function suggests a potential for a dedicated setup function,
+// but the functionality is currently executed directly.
+function initialize() {
+ console.error(plugin.id + ' ' + plugin.version + ' initialized');
+
+/**
+ * Creates a service entry in Movian for the plugin.
+ */
+service.create(plugin.title, PREFIX + ':start', 'video', true, LOGO);
+/**
+ * Creates global settings for the plugin in Movian.
+ */
+settings.globalSettings(plugin.id, plugin.title, LOGO, plugin.synopsis);
+
+// Plugin settings
+settings.createInfo('info', LOGO, 'Plugin developed by ' + plugin.author + '\n' + plugin.id + ' ' + plugin.version);
+settings.createDivider('Settings:');
+/**
+ * Creates a string setting for the domain, allowing users to change the base URL.
+ */
+settings.createString('domain', 'Домен', config.baseUrl, function(v) {
+  config.baseUrl = v;
 });
 
-new page.Route(PREFIX + ":play:(.*)", function (page, data) {
-  data = JSON.parse(data);
-  page.loading = true;
-  page.type = "directory";
-  page.metadata.logo = LOGO;
-  page.metadata.title = data.title;
+// HTTP Inspector
+/**
+ * Sets up an HTTP inspector to modify headers for requests to '.*libria.*' URLs,
+ * adding 'Accept-Encoding' and 'User-Agent' headers.
+ */
+io.httpInspectorCreate('.*libria.*', function(ctrl) {
+  ctrl.setHeader('Accept-Encoding', 'gzip');
+  ctrl.setHeader('User-Agent', UA);
+});
+}
 
-  file = data.hls;
-  for (i in file) {
-    page.appendItem("hls:http://" + data.host+file[i],"video",
-    {
-      title:"[HLS]-" + i.replace('fhd','1080').replace('hd','720').replace('sd','480') +'-'+(data.name !== null? data.name : 'Episode '+ fix_0(data.episode)), 
-      icon: data.icon,
+
+// === ROUTE HANDLERS ===
+/**
+ * Movian Searcher route handler for performing anime searches.
+ * @param {MovianPage} page - The Movian page object.
+ * @param {string} query - The search query entered by the user.
+ */
+page.Searcher(PREFIX + ' - Result', LOGO, function(page, query) {
+  page.metadata.icon = LOGO;
+  page.metadata.title = PREFIX + ' - Search results for: ' + query;
+  page.type = 'directory';
+  page.loading = true;
+  page.entries = 0;
+
+  apiClient.searchAnime(query, function(error, results) {
+    if (error) {
+      console.error('Search failed:', error);
+      page.appendItem('', 'separator', {
+        title: 'Ошибка поиска'
+      });
+    } else {
+      pageBuilders.buildSearchResults(page, results);
+    }
+    page.loading = false;
+  });
+});
+
+/**
+ * Movian Route handler for the plugin's starting page (catalog of releases).
+ * This route supports asynchronous pagination.
+ * @param {MovianPage} page - The Movian page object.
+ */
+new page.Route(PREFIX + ':start', function(page) {
+  page.loading = true;
+  page.metadata.logo = LOGO;
+  page.metadata.icon = LOGO;
+  page.metadata.title = PREFIX;
+  page.model.contents = 'grid';
+  page.type = 'directory';
+
+  var currentPage = 1;
+
+  /**
+   * Loader function for asynchronous pagination of the catalog.
+   * Fetches the next page of catalog data.
+   */
+  function loader() {
+    apiClient.getCatalog(currentPage, function(error, data) {
+      if (error) {
+        console.error('Failed to load catalog:', error);
+        page.appendItem('', 'separator', {
+          title: 'Ошибка загрузки данных'
+        });
+        page.haveMore(false);
+      } else {
+        if (data.meta && data.meta.pagination.current_page >= data.meta.pagination.total_pages) {
+          page.haveMore(false);
+        } else {
+          page.haveMore(true);
+        }
+
+        pageBuilders.buildCatalogPage(page, data);
+        currentPage++;
+      }
+
+      page.loading = false;
     });
+  }
+
+  loader(); // Initial load
+  page.asyncPaginator = loader; // Set the paginator for subsequent loads
+});
+
+/**
+ * Movian Route handler for a specific movie/anime release page.
+ * Fetches release details and franchise information concurrently.
+ * @param {MovianPage} page - The Movian page object.
+ * @param {string} id - The ID of the anime release.
+ */
+new page.Route(PREFIX + ':moviepage:(.*)', function(page, id) {
+  page.loading = true;
+
+  var releaseData = null;
+  var franchiseData = null;
+  var completedRequests = 0;
+
+  /**
+   * Checks if all necessary API requests have completed and then builds the page.
+   */
+  function checkCompletion() {
+    completedRequests++;
+    if (completedRequests === 2) { // Wait for both releaseData and franchiseData
+      if (releaseData) {
+        pageBuilders.buildReleasePage(page, releaseData, franchiseData);
+      } else {
+        page.error('Не удалось загрузить данные релиза');
+      }
+      page.loading = false;
+    }
+  }
+
+  apiClient.getRelease(id, function(error, data) {
+    if (!error) {
+      releaseData = data;
+    }
+    checkCompletion();
+  });
+
+  apiClient.getFranchise(id, function(error, data) {
+    if (!error) {
+      franchiseData = data;
+    }
+    checkCompletion();
+  });
+});
+
+/**
+ * Movian Route handler for playing an episode.
+ * Presents available HLS qualities for the episode.
+ * @param {MovianPage} page - The Movian page object.
+ * @param {string} data - JSON string containing episode data.
+ */
+new page.Route(PREFIX + ':play:(.*)', function(page, data) {
+  var episodeData = JSON.parse(data);
+  page.loading = true;
+  page.type = 'directory';
+  page.metadata.logo = LOGO;
+  page.metadata.title = episodeData.title;
+
+  var qualities = [
+    ['480', 'hls_480'],
+    ['720', 'hls_720'],
+    ['1080', 'hls_1080']
+  ];
+
+  for (var i = 0; i < qualities.length; i++) {
+    var quality = qualities[i][0];
+    var key = qualities[i][1];
+    var url = episodeData[key];
+
+    if (url) {
+      page.appendItem('hls:' + url, 'item', {
+        title: '[HLS] - ' + quality + 'p - ' + episodeData.title
+      });
+    }
   }
 
   page.loading = false;
 });
 
-function fix_0(n) { return (n < 10 ? '0' : '') + n; }
-
-
-//    var resp = http.request('https://api.'+BASE_URL+'/v3/title/updates?filter=posters,description,code,names,id&page=' + nextPage + '&items_per_page=40',opts).toString();
-
-
-// title/updates
-function asyncRequest(endpoint, params, page, cb) {
-  var URL = API_URL +'/v3/' + endpoint;
-  var opts = {
-    args: [params || {}],
-    noFail: true,
-    compression: true,
-    caching: true,
-    cacheTime: 6000,
-    debug: true
-  };
-  http.request(URL, opts, function(err, result) {
-    if(err) {
-      page && page.error(err);
-    } else {
-      try {
-        var r = JSON.parse(result);
-        if(r.error) {
-          console.error("Request failed: " + URL);
-          console.error(r.error.errors[0].message);
-          page && page.error(r.error.errors[0].reason);
-          throw(new Error("Request failed: " + r.error.errors[0].reason));
-        }
-        cb(r);
-      } catch(e) {
-        page && page.error(e);
-        throw(e);
-      }
-    }
-    page && (page.loading = false);
-  });
-}
+// // === START ===
+// The 'initialize' function call is commented out, meaning the setup code runs directly.
+ initialize();

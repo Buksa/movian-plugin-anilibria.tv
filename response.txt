@@ -1,0 +1,426 @@
+  //https://api.anilibria.app/api/docs/v1#/Аниме.Релизы
+  //https://aniliberty.top/api/v1/anime/releases/9970
+  // response body
+  // {
+  //   "id": 9970,
+  //   "type": {
+  //     "value": "TV",
+  //     "description": "ТВ"
+  //   },
+  //   "year": 2025,
+  //   "name": {
+  //     "main": "Песнь ночных сов 2",
+  //     "english": "Yofukashi no Uta Season 2",
+  //     "alternative": null
+  //   },
+  //   "alias": "yofukashi-no-uta-season-2",
+  //   "season": {
+  //     "value": "summer",
+  //     "description": "Лето"
+  //   },
+  //   "poster": {
+  //     "src": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //     "preview": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //     "thumbnail": "/storage/releases/posters/9970/B5a5hAIDfKwv7YoepG0RpUYd6hlL3hM3.jpg",
+  //     "optimized": {
+  //       "src": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //       "preview": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //       "thumbnail": "/storage/releases/posters/9970/Hub4CUdsivNb9IlKGzF3NPzUgg1ivKqH.webp"
+  //     }
+  //   },
+  //   "fresh_at": "2025-07-12T20:54:15+00:00",
+  //   "created_at": "2025-06-11T19:29:18+00:00",
+  //   "updated_at": "2025-07-12T20:53:39+00:00",
+  //   "is_ongoing": true,
+  //   "age_rating": {
+  //     "value": "R16_PLUS",
+  //     "label": "16+",
+  //     "is_adult": false,
+  //     "description": "Для людей, достигших возраста шестнадцати лет (16+)"
+  //   },
+  //   "publish_day": {
+  //     "value": 6,
+  //     "description": "Суббота"
+  //   },
+  //   "description": "Вампиром стать проще простого! Достаточно одного небольшого укуса… и капельки любви в придачу. И всё бы ничего, но ни Нанакуса Надзуна, ни Ямори Ко не представляют, что же такое любовь.\r\nВ попытках понять это чувство, они проводят ночи за играми и прогулками, пока на их пути не попадается таинственный частный детектив, поставившая себе цель во что бы то ни стало истребить всех вампиров. Чтобы осуществить это, ей потребуется отыскать слабости вампиров, а именно — вещи, к которым они были привязаны в своей человеческой жизни.\r\nЧтобы защитить Надзуну, Ко предстоит найти её слабость, однако всё осложняется тем, что та ничегошеньки не помнит из своего человеческого прошлого.",
+  //   "notification": null,
+  //   "episodes_total": 12,
+  //   "external_player": null,
+  //   "is_in_production": true,
+  //   "is_blocked_by_geo": false,
+  //   "is_blocked_by_copyrights": false,
+  //   "added_in_users_favorites": 5934,
+  //   "average_duration_of_episode": 24,
+  //   "added_in_planned_collection": 417,
+  //   "added_in_watched_collection": 17,
+  //   "added_in_watching_collection": 709,
+  //   "added_in_postponed_collection": 21,
+  //   "added_in_abandoned_collection": 8,
+  //   "genres": [
+  //     {
+  //       "id": 4,
+  //       "name": "Сёнен",
+  //       "image": {
+  //         "preview": "/storage/anime/genres/images/4/0m2m6ZJvFDf4exm6fTohtHwo8PoEqzIX.jpg",
+  //         "thumbnail": "/storage/anime/genres/images/4/UD4NKYAngvBtHS2hkcPUNQ9iKBFcotVi.jpg",
+  //         "optimized": {
+  //           "preview": "/storage/anime/genres/images/4/f1t40ahbG7mzcmZfhxlVdkC0DtY2vOQ9.webp",
+  //           "thumbnail": "/storage/anime/genres/images/4/SVJm7UTSTS3flVrQttsOD1d3iUoRp00B.webp"
+  //         }
+  //       },
+  //       "total_releases": 290
+  //     },
+  //     {
+  //       "id": 11,
+  //       "name": "Романтика",
+  //       "image": {
+  //         "preview": "/storage/anime/genres/images/11/IMvKVBJEa0oQTnJSTRzUO2Q5GcO8W3yh.jpg",
+  //         "thumbnail": "/storage/anime/genres/images/11/PH6VnfrPncIW3BiYjNEBIWPtL4jQLNz9.jpg",
+  //         "optimized": {
+  //           "preview": "/storage/anime/genres/images/11/4hYmrD37aIKEiQcHr48fiKPe8PaW01uk.webp",
+  //           "thumbnail": "/storage/anime/genres/images/11/UkFZNGtVyzN0oC3X1xGxn859frg2R8Xj.webp"
+  //         }
+  //       },
+  //       "total_releases": 418
+  //     },
+  //     {
+  //       "id": 28,
+  //       "name": "Сверхъестественное",
+  //       "image": {
+  //         "preview": "/storage/anime/genres/images/28/pUwDuFHdJkJpibQwKoROuz99Ayg0MV2t.jpg",
+  //         "thumbnail": "/storage/anime/genres/images/28/OOnUfzM433g7kC6Guz4uohiBCPeENqQx.jpg",
+  //         "optimized": {
+  //           "preview": "/storage/anime/genres/images/28/m0P5nQwrDSKuvXrLnutlKqhweVc1MLXN.webp",
+  //           "thumbnail": "/storage/anime/genres/images/28/7zjjRP4Cu91AdJDp9cdUEA7Au3fVrAfv.webp"
+  //         }
+  //       },
+  //       "total_releases": 289
+  //     }
+  //   ],
+  //   "members": [
+  //     {
+  //       "id": "9f517200-0352-4ae8-99de-c2e3721a8f9e",
+  //       "role": {
+  //         "value": "voicing",
+  //         "description": "Озвучка"
+  //       },
+  //       "nickname": "Sharon",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f51720e-c9f4-48ce-9127-9f289a49a161",
+  //       "role": {
+  //         "value": "voicing",
+  //         "description": "Озвучка"
+  //       },
+  //       "nickname": "Renie",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f51721a-cddd-46e0-9a15-9d6f4d74d2e3",
+  //       "role": {
+  //         "value": "voicing",
+  //         "description": "Озвучка"
+  //       },
+  //       "nickname": "Silv",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f51722f-ecde-442d-82d4-c138441be5c8",
+  //       "role": {
+  //         "value": "voicing",
+  //         "description": "Озвучка"
+  //       },
+  //       "nickname": "Kroxxa",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f517252-4a7a-40e9-9bd7-276b5d70dfae",
+  //       "role": {
+  //         "value": "translating",
+  //         "description": "Перевод и адаптация"
+  //       },
+  //       "nickname": "SwiXit",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f517277-d005-46a0-add3-d6f98d6fac93",
+  //       "role": {
+  //         "value": "decorating",
+  //         "description": "Оформление"
+  //       },
+  //       "nickname": "Just Noname",
+  //       "user": null
+  //     },
+  //     {
+  //       "id": "9f517282-31e2-41be-b060-32b0b9296ca2",
+  //       "role": {
+  //         "value": "timing",
+  //         "description": "Работа со звуком"
+  //       },
+  //       "nickname": "emmett",
+  //       "user": null
+  //     }
+  //   ],
+  //   "sponsor": {
+  //     "id": "9f4b9c6f-55db-4738-8d77-36195a376868",
+  //     "title": "FunPay",
+  //     "description": "Главная проблема Анко — низкий онлайн в Vampire Hunters 2. Подруга, переходи в Grow a Garden. Трать свои робуксы и силы на других сов.\r\nerid: 2Vtzqwu3KNw",
+  //     "url_title": "Закупиться на FunPay",
+  //     "url": "https://funpay.com/go/Yofukashi"
+  //   },
+  //   "episodes": [
+  //     {
+  //       "id": "9f5182a6-4714-4833-b9b8-ca7643d8eea9",
+  //       "name": "Это время не для нас",
+  //       "ordinal": 1,
+  //       "opening": {
+  //         "stop": 131,
+  //         "start": 41
+  //       },
+  //       "ending": {
+  //         "stop": 1376,
+  //         "start": 1286
+  //       },
+  //       "preview": {
+  //         "src": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV.jpg",
+  //         "preview": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV.jpg",
+  //         "thumbnail": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV__0a4c6d0691bde092f09983199681f957.jpg",
+  //         "optimized": {
+  //           "src": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV__8c4bc136c5653fd0d716a1c4916c8f43.webp",
+  //           "preview": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV__8c4bc136c5653fd0d716a1c4916c8f43.webp",
+  //           "thumbnail": "/storage/releases/episodes/previews/9970/1/4ifwAYWx7hSzHSPV__1488898a9ec5dafb41d3bf942515cdf9.webp"
+  //         }
+  //       },
+  //       "hls_480": "https://cache.libria.fun/videos/media/ts/9970/1/480/34777de201467c57935c48b77f7837de.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "hls_720": "https://cache.libria.fun/videos/media/ts/9970/1/720/6bf8e6b5e5ec221842d61537b04ff69d.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "hls_1080": "https://cache.libria.fun/videos/media/ts/9970/1/1080/1d163dce5109ecd605eec246451fe614.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "duration": 1377,
+  //       "rutube_id": null,
+  //       "youtube_id": null,
+  //       "updated_at": "2025-07-05T14:45:24+00:00",
+  //       "sort_order": 1,
+  //       "release_id": 9970,
+  //       "name_english": null
+  //     },
+  //     {
+  //       "id": "9f602180-df3a-4de3-88ad-56fa47720625",
+  //       "name": "Я тебя искал",
+  //       "ordinal": 2,
+  //       "opening": {
+  //         "stop": 116,
+  //         "start": 26
+  //       },
+  //       "ending": {
+  //         "stop": 1376,
+  //         "start": 1286
+  //       },
+  //       "preview": {
+  //         "src": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc.jpg",
+  //         "preview": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc.jpg",
+  //         "thumbnail": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc__7292ac06a7ad1a0e52b59dc638b61661.jpg",
+  //         "optimized": {
+  //           "src": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc__f193828db47071560c1081da4e71377f.webp",
+  //           "preview": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc__f193828db47071560c1081da4e71377f.webp",
+  //           "thumbnail": "/storage/releases/episodes/previews/9970/2/3ajGluc2XTcuCGKc__98b3a86e1a5e86dc442d2927ec757a7e.webp"
+  //         }
+  //       },
+  //       "hls_480": "https://cache.libria.fun/videos/media/ts/9970/2/480/899b68f4c0868fe5c973c0db4b255a99.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "hls_720": "https://cache.libria.fun/videos/media/ts/9970/2/720/ea3834413f04e0fa620d5d1f3446740c.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "hls_1080": "https://cache.libria.fun/videos/media/ts/9970/2/1080/ec7aa009aa7c6477b173e2a58a69df7e.m3u8?countryIso=US&isAuthorized=0&isWithVideoAds=1&isWithVideoAdsAlways=1",
+  //       "duration": 1377,
+  //       "rutube_id": null,
+  //       "youtube_id": null,
+  //       "updated_at": "2025-07-12T20:59:55+00:00",
+  //       "sort_order": 2,
+  //       "release_id": 9970,
+  //       "name_english": null
+  //     }
+  //   ],
+  //   "torrents": [
+  //     {
+  //       "id": 34066,
+  //       "hash": "9116311686529b039bac2b8250518a227e612ebb",
+  //       "size": 267598145,
+  //       "type": {
+  //         "value": "WEBRip",
+  //         "description": "WEBRip"
+  //       },
+  //       "label": "Yofukashi no Uta Season 2 - AniLibria.TOP [WEBRip 1080p][HEVC][1]",
+  //       "codec": {
+  //         "value": "x265/HEVC",
+  //         "label": "HEVC",
+  //         "description": "x265/HEVC",
+  //         "label_color": "#FFEB3B",
+  //         "label_is_visible": true
+  //       },
+  //       "color": {
+  //         "value": "10Bit",
+  //         "description": "10-bit"
+  //       },
+  //       "magnet": "magnet:?xt=urn:btih:9116311686529b039bac2b8250518a227e612ebb&dn=Yofukashi+no+Uta+Season+2+-+AniLiberty+%5BWEBRip+1080p+HEVC%5D&xl=267598145&tr=http://tr.libria.fun:2710/announce&tr=http://retracker.local/announce",
+  //       "seeders": 29,
+  //       "quality": {
+  //         "value": "1080p",
+  //         "description": "1080p"
+  //       },
+  //       "bitrate": null,
+  //       "filename": "Yofukashi no Uta Season 2 - AniLibria.TOP [WEBRip 1080p][HEVC][1].torrent",
+  //       "leechers": 0,
+  //       "sort_order": 0,
+  //       "created_at": "2025-07-05T15:10:32+00:00",
+  //       "updated_at": "2025-07-05T15:10:32+00:00",
+  //       "is_hardsub": false,
+  //       "description": "1",
+  //       "completed_times": 688,
+  //       "release": {
+  //         "id": 9970,
+  //         "type": {
+  //           "value": "TV",
+  //           "description": "ТВ"
+  //         },
+  //         "year": 2025,
+  //         "name": {
+  //           "main": "Песнь ночных сов 2",
+  //           "english": "Yofukashi no Uta Season 2",
+  //           "alternative": null
+  //         },
+  //         "alias": "yofukashi-no-uta-season-2",
+  //         "season": {
+  //           "value": "summer",
+  //           "description": "Лето"
+  //         },
+  //         "poster": {
+  //           "src": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //           "preview": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //           "thumbnail": "/storage/releases/posters/9970/B5a5hAIDfKwv7YoepG0RpUYd6hlL3hM3.jpg",
+  //           "optimized": {
+  //             "src": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //             "preview": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //             "thumbnail": "/storage/releases/posters/9970/Hub4CUdsivNb9IlKGzF3NPzUgg1ivKqH.webp"
+  //           }
+  //         },
+  //         "fresh_at": "2025-07-12T20:54:15+00:00",
+  //         "created_at": "2025-06-11T19:29:18+00:00",
+  //         "updated_at": "2025-07-12T20:53:39+00:00",
+  //         "is_ongoing": true,
+  //         "age_rating": {
+  //           "value": "R16_PLUS",
+  //           "label": "16+",
+  //           "is_adult": false,
+  //           "description": "Для людей, достигших возраста шестнадцати лет (16+)"
+  //         },
+  //         "publish_day": {
+  //           "value": 6,
+  //           "description": "Суббота"
+  //         },
+  //         "description": "Вампиром стать проще простого! Достаточно одного небольшого укуса… и капельки любви в придачу. И всё бы ничего, но ни Нанакуса Надзуна, ни Ямори Ко не представляют, что же такое любовь.\r\nВ попытках понять это чувство, они проводят ночи за играми и прогулками, пока на их пути не попадается таинственный частный детектив, поставившая себе цель во что бы то ни стало истребить всех вампиров. Чтобы осуществить это, ей потребуется отыскать слабости вампиров, а именно — вещи, к которым они были привязаны в своей человеческой жизни.\r\nЧтобы защитить Надзуну, Ко предстоит найти её слабость, однако всё осложняется тем, что та ничегошеньки не помнит из своего человеческого прошлого.",
+  //         "notification": null,
+  //         "episodes_total": 12,
+  //         "external_player": null,
+  //         "is_in_production": true,
+  //         "is_blocked_by_geo": false,
+  //         "is_blocked_by_copyrights": false,
+  //         "added_in_users_favorites": 5934,
+  //         "average_duration_of_episode": 24,
+  //         "added_in_planned_collection": 417,
+  //         "added_in_watched_collection": 17,
+  //         "added_in_watching_collection": 709,
+  //         "added_in_postponed_collection": 21,
+  //         "added_in_abandoned_collection": 8
+  //       }
+  //     },
+  //     {
+  //       "id": 34198,
+  //       "hash": "3a428714cd5b1dddeb88f5479cc92f784c0f1f23",
+  //       "size": 1939875417,
+  //       "type": {
+  //         "value": "WEBRip",
+  //         "description": "WEBRip"
+  //       },
+  //       "label": "Yofukashi no Uta Season 2 - AniLibria.TOP [WEBRip 1080p][AVC][1-2]",
+  //       "codec": {
+  //         "value": "x264/AVC",
+  //         "label": "AVC",
+  //         "description": "x264/AVC",
+  //         "label_color": null,
+  //         "label_is_visible": false
+  //       },
+  //       "color": {
+  //         "value": "8bit",
+  //         "description": "8-bit"
+  //       },
+  //       "magnet": "magnet:?xt=urn:btih:3a428714cd5b1dddeb88f5479cc92f784c0f1f23&dn=Yofukashi+no+Uta+Season+2+-+AniLiberty+%5BWEBRip+1080p%5D&xl=1939875417&tr=http://tr.libria.fun:2710/announce&tr=http://retracker.local/announce",
+  //       "seeders": 13,
+  //       "quality": {
+  //         "value": "1080p",
+  //         "description": "1080p"
+  //       },
+  //       "bitrate": null,
+  //       "filename": "Yofukashi no Uta Season 2 - AniLibria.TOP [WEBRip 1080p][AVC][1-2].torrent",
+  //       "leechers": 10,
+  //       "sort_order": 0,
+  //       "created_at": "2025-07-05T14:06:52+00:00",
+  //       "updated_at": "2025-07-12T20:53:39+00:00",
+  //       "is_hardsub": false,
+  //       "description": "1-2",
+  //       "completed_times": 238,
+  //       "release": {
+  //         "id": 9970,
+  //         "type": {
+  //           "value": "TV",
+  //           "description": "ТВ"
+  //         },
+  //         "year": 2025,
+  //         "name": {
+  //           "main": "Песнь ночных сов 2",
+  //           "english": "Yofukashi no Uta Season 2",
+  //           "alternative": null
+  //         },
+  //         "alias": "yofukashi-no-uta-season-2",
+  //         "season": {
+  //           "value": "summer",
+  //           "description": "Лето"
+  //         },
+  //         "poster": {
+  //           "src": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //           "preview": "/storage/releases/posters/9970/ODLNMnyRKwwBgXzCfdRyU424Rh4hvdex.jpg",
+  //           "thumbnail": "/storage/releases/posters/9970/B5a5hAIDfKwv7YoepG0RpUYd6hlL3hM3.jpg",
+  //           "optimized": {
+  //             "src": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //             "preview": "/storage/releases/posters/9970/LhFbKJBbTuAcxQxAPOT7xC4uComBHfKw.webp",
+  //             "thumbnail": "/storage/releases/posters/9970/Hub4CUdsivNb9IlKGzF3NPzUgg1ivKqH.webp"
+  //           }
+  //         },
+  //         "fresh_at": "2025-07-12T20:54:15+00:00",
+  //         "created_at": "2025-06-11T19:29:18+00:00",
+  //         "updated_at": "2025-07-12T20:53:39+00:00",
+  //         "is_ongoing": true,
+  //         "age_rating": {
+  //           "value": "R16_PLUS",
+  //           "label": "16+",
+  //           "is_adult": false,
+  //           "description": "Для людей, достигших возраста шестнадцати лет (16+)"
+  //         },
+  //         "publish_day": {
+  //           "value": 6,
+  //           "description": "Суббота"
+  //         },
+  //         "description": "Вампиром стать проще простого! Достаточно одного небольшого укуса… и капельки любви в придачу. И всё бы ничего, но ни Нанакуса Надзуна, ни Ямори Ко не представляют, что же такое любовь.\r\nВ попытках понять это чувство, они проводят ночи за играми и прогулками, пока на их пути не попадается таинственный частный детектив, поставившая себе цель во что бы то ни стало истребить всех вампиров. Чтобы осуществить это, ей потребуется отыскать слабости вампиров, а именно — вещи, к которым они были привязаны в своей человеческой жизни.\r\nЧтобы защитить Надзуну, Ко предстоит найти её слабость, однако всё осложняется тем, что та ничегошеньки не помнит из своего человеческого прошлого.",
+  //         "notification": null,
+  //         "episodes_total": 12,
+  //         "external_player": null,
+  //         "is_in_production": true,
+  //         "is_blocked_by_geo": false,
+  //         "is_blocked_by_copyrights": false,
+  //         "added_in_users_favorites": 5934,
+  //         "average_duration_of_episode": 24,
+  //         "added_in_planned_collection": 417,
+  //         "added_in_watched_collection": 17,
+  //         "added_in_watching_collection": 709,
+  //         "added_in_postponed_collection": 21,
+  //         "added_in_abandoned_collection": 8
+  //       }
+  //     }
+  //   ]
+  // }

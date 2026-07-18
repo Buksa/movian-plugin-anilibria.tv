@@ -38,17 +38,13 @@ settings.createBool('cacheEnabled', 'Включить кеширование', t
     api.setCacheEnabled(v);
 });
 
-var apiUrlSetting = settings.createString('apiUrl', 'URL API (зеркало)', 'https://api.anilibria.app/api/v1', function (v) {
+settings.createString('apiUrl', 'URL API (зеркало)', 'https://api.anilibria.app/api/v1', function (v) {
     api.setBaseUrl(v);
 });
 
-settings.createAction('selectMirror', 'Выбрать зеркало (GitHub)', function () {
-    api.fetchMirrors(function (err, mirrors) {
-        if (err) {
-            console.log('Error fetching mirrors:', err);
-            return;
-        }
-        page.redirect(PREFIX + ':select_mirror', { mirrors: mirrors });
+settings.createAction('refreshMirror', 'Обновить зеркало (DNS)', function () {
+    api.refreshConfig(function () {
+        console.log('Mirror refreshed via DNS');
     });
 });
 
@@ -64,9 +60,9 @@ settings.createAction('testBypass', 'Проверить обход Cloudflare', 
     console.log('--- Начинаю тест обхода Cloudflare ---');
     api.testBypass(function (success, error) {
         if (success) {
-            console.log('✅ ТЕСТ ПРОЙДЕН: Список серий успешно получен!');
+            console.log('ТЕСТ ПРОЙДЕН: Список серий успешно получен!');
         } else {
-            console.log('❌ ТЕСТ ПРОВАЛЕН: ' + error);
+            console.log('ТЕСТ ПРОВАЛЕН: ' + error);
         }
     });
 });
@@ -187,7 +183,8 @@ new page.Route(PREFIX + ':schedule', function (page) {
             ui.renderError(page, 'Ошибка загрузки расписания');
             return;
         }
-        ui.renderSchedule(page, data);
+        // API returns { data: [scheduleItem, ...] }
+        ui.renderSchedule(page, data.data || []);
     });
 });
 
@@ -221,26 +218,6 @@ new page.Route(PREFIX + ':release:(.*)', function (page, id) {
             }
         });
     });
-});
-
-// === Выбор зеркала ===
-new page.Route(PREFIX + ':select_mirror', function (page, params) {
-    page.type = 'directory';
-    page.metadata.title = 'Выберите зеркало Anilibria';
-
-    params.mirrors.forEach(function (m) {
-        page.appendItem(PREFIX + ':apply_mirror:' + encodeURIComponent(m[0]), 'video', {
-            title: m[1],
-            description: m[0]
-        });
-    });
-});
-
-new page.Route(PREFIX + ':apply_mirror:(.*)', function (page, url) {
-    var decodedUrl = decodeURIComponent(url);
-    apiUrlSetting.set(decodedUrl);
-    api.setBaseUrl(decodedUrl);
-    page.back();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -103,20 +103,25 @@ new page.Route(PREFIX + ':start', function (page) {
     page.metadata.title = 'Anilibria';
     page.model.contents = 'grid';
 
-    var currentPage = 1;
+    var nPage = 1;
     var loading = false;
     var loadToken = 0;
-    var PAGE_DELAY = 1200; // ms — delay before first-page haveMore to avoid GLW cloner races
+    var initialized = false;
 
-    page.flush();
+    var FIRST_PAGE_DELAY = 1200;
+    var CACHE_DELAY = 50;
+    var LOAD_TIMEOUT = 15000;
 
-    function finishLoad(token, hasMore, fromCache) {
+    function paginationDelay(loadedPage, fromCache, hasMore) {
+        if (!hasMore) return 0;
+        if (loadedPage === 1) return FIRST_PAGE_DELAY;
+        return fromCache ? CACHE_DELAY : 0;
+    }
+
+    function finishLoad(token, hasMore, fromCache, loadedPage) {
+        var delay = paginationDelay(loadedPage, fromCache, hasMore);
         loading = false;
         page.loading = false;
-
-        var delay = (currentPage === 1 && hasMore) ? PAGE_DELAY
-                  : fromCache ? 50
-                  : 0;
 
         if (!delay) {
             page.haveMore(hasMore);
@@ -135,7 +140,15 @@ new page.Route(PREFIX + ':start', function (page) {
 
         var token = loadToken;
 
-        api.catalog(currentPage, function (err, data, fromCache) {
+        var loadTimeout = setTimeout(function () {
+            if (token !== loadToken) return;
+            loadToken++;
+            loading = false;
+            page.loading = false;
+        }, LOAD_TIMEOUT);
+
+        api.catalog(nPage, function (err, data, fromCache) {
+            clearTimeout(loadTimeout);
             if (token !== loadToken) return;
 
             if (err) {
@@ -149,12 +162,14 @@ new page.Route(PREFIX + ':start', function (page) {
             var items = fmt.catalog(data);
             ui.renderCatalog(page, items);
 
-            currentPage++;
-            var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            finishLoad(token, hasMore, fromCache);
+            var loadedPage = nPage;
+            nPage++;
 
-            // Auto-load next pages from cache (up to 3)
-            if (fromCache && hasMore && currentPage <= 3) {
+            var hasMore = data.data && data.data.length >= PAGE_SIZE;
+            finishLoad(token, hasMore, fromCache, loadedPage);
+
+            // Auto-load from cache (up to 3 pages)
+            if (fromCache && hasMore && nPage <= 3) {
                 setTimeout(loader, 10);
             }
         });
@@ -162,6 +177,7 @@ new page.Route(PREFIX + ':start', function (page) {
 
     page.asyncPaginator = loader;
     loader();
+    initialized = true;
 });
 
 // === Каталог (отдельная страница) ===
@@ -170,20 +186,25 @@ new page.Route(PREFIX + ':catalog', function (page) {
     page.metadata.title = 'Каталог';
     page.model.contents = 'grid';
 
-    var currentPage = 1;
+    var nPage = 1;
     var loading = false;
     var loadToken = 0;
-    var PAGE_DELAY = 1200;
+    var initialized = false;
 
-    page.flush();
+    var FIRST_PAGE_DELAY = 1200;
+    var CACHE_DELAY = 50;
+    var LOAD_TIMEOUT = 15000;
 
-    function finishLoad(token, hasMore, fromCache) {
+    function paginationDelay(loadedPage, fromCache, hasMore) {
+        if (!hasMore) return 0;
+        if (loadedPage === 1) return FIRST_PAGE_DELAY;
+        return fromCache ? CACHE_DELAY : 0;
+    }
+
+    function finishLoad(token, hasMore, fromCache, loadedPage) {
+        var delay = paginationDelay(loadedPage, fromCache, hasMore);
         loading = false;
         page.loading = false;
-
-        var delay = (currentPage === 1 && hasMore) ? PAGE_DELAY
-                  : fromCache ? 50
-                  : 0;
 
         if (!delay) {
             page.haveMore(hasMore);
@@ -202,7 +223,15 @@ new page.Route(PREFIX + ':catalog', function (page) {
 
         var token = loadToken;
 
-        api.catalog(currentPage, function (err, data, fromCache) {
+        var loadTimeout = setTimeout(function () {
+            if (token !== loadToken) return;
+            loadToken++;
+            loading = false;
+            page.loading = false;
+        }, LOAD_TIMEOUT);
+
+        api.catalog(nPage, function (err, data, fromCache) {
+            clearTimeout(loadTimeout);
             if (token !== loadToken) return;
 
             if (err) {
@@ -216,11 +245,13 @@ new page.Route(PREFIX + ':catalog', function (page) {
             var items = fmt.catalog(data);
             ui.renderCatalog(page, items);
 
-            currentPage++;
-            var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            finishLoad(token, hasMore, fromCache);
+            var loadedPage = nPage;
+            nPage++;
 
-            if (fromCache && hasMore && currentPage <= 3) {
+            var hasMore = data.data && data.data.length >= PAGE_SIZE;
+            finishLoad(token, hasMore, fromCache, loadedPage);
+
+            if (fromCache && hasMore && nPage <= 3) {
                 setTimeout(loader, 10);
             }
         });
@@ -228,6 +259,7 @@ new page.Route(PREFIX + ':catalog', function (page) {
 
     page.asyncPaginator = loader;
     loader();
+    initialized = true;
 });
 
 // === Расписание ===

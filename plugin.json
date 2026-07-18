@@ -1,0 +1,14 @@
+{
+  "type": "ecmascript",
+  "apiversion": 2,
+  "id": "anilibria",
+  "file": "anilibria.js",
+  "showtimeVersion": "5",
+  "version": "1.0.0",
+  "author": "Buksa",
+  "title": "Anilibria",
+  "icon": "logo.png",
+  "category": "video",
+  "synopsis": "Плагин для просмотра аниме с Anilibria.tv",
+  "description": "<p>Anilibria — плагин для просмотра аниме с сайта <a href=\"https://www.anilibria.tv\">www.anilibria.tv</a>. Каталог, поиск, расписание, франшизы, торренты.</p>"
+}

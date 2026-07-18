@@ -102,18 +102,47 @@ new page.Route(PREFIX + ':start', function (page) {
     page.type = 'directory';
     page.metadata.title = 'Anilibria';
     page.model.contents = 'grid';
-    page.loading = true;
 
-    // Показываем сразу каталог с пагинацией
     var currentPage = 1;
+    var loading = false;
+    var loadToken = 0;
+    var PAGE_DELAY = 1200; // ms — delay before first-page haveMore to avoid GLW cloner races
+
     page.flush();
 
+    function finishLoad(token, hasMore, fromCache) {
+        loading = false;
+        page.loading = false;
+
+        var delay = (currentPage === 1 && hasMore) ? PAGE_DELAY
+                  : fromCache ? 50
+                  : 0;
+
+        if (!delay) {
+            page.haveMore(hasMore);
+            return;
+        }
+        setTimeout(function () {
+            if (token !== loadToken) return;
+            page.haveMore(hasMore);
+        }, delay);
+    }
+
     function loader() {
+        if (loading) return;
+        loading = true;
+        if (page.entries === 0) page.loading = true;
+
+        var token = loadToken;
+
         api.catalog(currentPage, function (err, data, fromCache) {
-            page.loading = false;
+            if (token !== loadToken) return;
+
             if (err) {
                 ui.renderError(page, 'Ошибка загрузки каталога');
                 page.haveMore(false);
+                loading = false;
+                page.loading = false;
                 return;
             }
 
@@ -122,17 +151,17 @@ new page.Route(PREFIX + ':start', function (page) {
 
             currentPage++;
             var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            page.haveMore(hasMore);
+            finishLoad(token, hasMore, fromCache);
 
-            // Авто-подгрузка из кэша (до 3 страниц)
+            // Auto-load next pages from cache (up to 3)
             if (fromCache && hasMore && currentPage <= 3) {
                 setTimeout(loader, 10);
             }
         });
     }
 
-    loader();
     page.asyncPaginator = loader;
+    loader();
 });
 
 // === Каталог (отдельная страница) ===
@@ -140,17 +169,47 @@ new page.Route(PREFIX + ':catalog', function (page) {
     page.type = 'directory';
     page.metadata.title = 'Каталог';
     page.model.contents = 'grid';
-    page.loading = true;
 
     var currentPage = 1;
+    var loading = false;
+    var loadToken = 0;
+    var PAGE_DELAY = 1200;
+
     page.flush();
 
+    function finishLoad(token, hasMore, fromCache) {
+        loading = false;
+        page.loading = false;
+
+        var delay = (currentPage === 1 && hasMore) ? PAGE_DELAY
+                  : fromCache ? 50
+                  : 0;
+
+        if (!delay) {
+            page.haveMore(hasMore);
+            return;
+        }
+        setTimeout(function () {
+            if (token !== loadToken) return;
+            page.haveMore(hasMore);
+        }, delay);
+    }
+
     function loader() {
+        if (loading) return;
+        loading = true;
+        if (page.entries === 0) page.loading = true;
+
+        var token = loadToken;
+
         api.catalog(currentPage, function (err, data, fromCache) {
-            page.loading = false;
+            if (token !== loadToken) return;
+
             if (err) {
                 ui.renderError(page, 'Ошибка загрузки каталога');
                 page.haveMore(false);
+                loading = false;
+                page.loading = false;
                 return;
             }
 
@@ -159,7 +218,7 @@ new page.Route(PREFIX + ':catalog', function (page) {
 
             currentPage++;
             var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            page.haveMore(hasMore);
+            finishLoad(token, hasMore, fromCache);
 
             if (fromCache && hasMore && currentPage <= 3) {
                 setTimeout(loader, 10);
@@ -167,8 +226,8 @@ new page.Route(PREFIX + ':catalog', function (page) {
         });
     }
 
-    loader();
     page.asyncPaginator = loader;
+    loader();
 });
 
 // === Расписание ===

@@ -10,6 +10,8 @@ var api = require('./lib/api');
 var fmt = require('./lib/formatters');
 var ui = require('./lib/ui');
 var resume = require('./lib/resume');
+var pagination = require('./lib/pagination');
+var releaseView = require('./lib/release-view');
 
 var plugin = JSON.parse(Plugin.manifest);
 var PREFIX = fmt.PREFIX;
@@ -86,180 +88,74 @@ page.Searcher(plugin.title, LOGO, function (page, query) {
         return;
     }
 
-    api.search(query, 1, function (err, data) {
+    api.search(query, 1, function (err, result) {
         page.loading = false;
         if (err) {
             ui.renderError(page, 'Ошибка поиска: ' + err.message);
             return;
         }
-        var items = fmt.catalog(data);
+        var items = fmt.catalog(result.data);
         ui.renderSearch(page, items);
     });
 });
 
-// === Главная ===
-new page.Route(PREFIX + ':start', function (page) {
-    page.type = 'directory';
-    page.metadata.title = 'Anilibria';
+// === Каталог с пагинацией ===
+function setupCatalogPage(page, title) {
+    //page.type = 'directory';
+    page.metadata.title = title;
     page.model.contents = 'grid';
 
-    var nPage = 1;
-    var loading = false;
-    var loadToken = 0;
-    var initialized = false;
+    var pager = pagination.create({
+        loadPage: function (pageNumber, callback) {
+            api.catalog(pageNumber, function (err, result) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
 
-    var FIRST_PAGE_DELAY = 1200;
-    var CACHE_DELAY = 50;
-    var LOAD_TIMEOUT = 15000;
+                callback(null, {
+                    items: fmt.catalog(result.data),
+                    hasMore: !!(result.data.data &&
+                        result.data.data.length >= PAGE_SIZE),
+                    cacheHit: !!result.cacheHit
+                });
+            });
+        },
 
-    function paginationDelay(loadedPage, fromCache, hasMore) {
-        if (!hasMore) return 0;
-        if (loadedPage === 1) return FIRST_PAGE_DELAY;
-        return fromCache ? CACHE_DELAY : 0;
-    }
+        onLoadStart: function () {
+            if (page.entries === 0) page.loading = true;
+        },
 
-    function finishLoad(token, hasMore, fromCache, loadedPage) {
-        var delay = paginationDelay(loadedPage, fromCache, hasMore);
-        loading = false;
-        page.loading = false;
-
-        if (!delay) {
-            page.haveMore(hasMore);
-            return;
-        }
-        setTimeout(function () {
-            if (token !== loadToken) return;
-            page.haveMore(hasMore);
-        }, delay);
-    }
-
-    function loader() {
-        if (loading) return;
-        loading = true;
-        if (page.entries === 0) page.loading = true;
-
-        var token = loadToken;
-
-        var loadTimeout = setTimeout(function () {
-            if (token !== loadToken) return;
-            loadToken++;
-            loading = false;
+        onLoadEnd: function () {
             page.loading = false;
-        }, LOAD_TIMEOUT);
+        },
 
-        api.catalog(nPage, function (err, data, fromCache) {
-            clearTimeout(loadTimeout);
-            if (token !== loadToken) return;
-
-            if (err) {
-                ui.renderError(page, 'Ошибка загрузки каталога');
-                page.haveMore(false);
-                loading = false;
-                page.loading = false;
-                return;
-            }
-
-            var items = fmt.catalog(data);
+        onItems: function (items) {
             ui.renderCatalog(page, items);
+        },
 
-            var loadedPage = nPage;
-            nPage++;
+        onError: function () {
+            ui.renderError(page, 'Ошибка загрузки каталога');
+        },
 
-            var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            finishLoad(token, hasMore, fromCache, loadedPage);
+        onHaveMore: function (hasMore) {
+            page.haveMore(hasMore);
+        }
+    });
 
-            // Auto-load from cache (up to 3 pages)
-            if (fromCache && hasMore && nPage <= 3) {
-                setTimeout(loader, 10);
-            }
-        });
-    }
+    page.asyncPaginator = pager.load;
+    pager.load();
+    page.type = 'directory';
+}
 
-    page.asyncPaginator = loader;
-    loader();
-    initialized = true;
+// === Главная ===
+new page.Route(PREFIX + ':start', function (page) {
+    setupCatalogPage(page, 'Anilibria');
 });
 
 // === Каталог (отдельная страница) ===
 new page.Route(PREFIX + ':catalog', function (page) {
-    page.type = 'directory';
-    page.metadata.title = 'Каталог';
-    page.model.contents = 'grid';
-
-    var nPage = 1;
-    var loading = false;
-    var loadToken = 0;
-    var initialized = false;
-
-    var FIRST_PAGE_DELAY = 1200;
-    var CACHE_DELAY = 50;
-    var LOAD_TIMEOUT = 15000;
-
-    function paginationDelay(loadedPage, fromCache, hasMore) {
-        if (!hasMore) return 0;
-        if (loadedPage === 1) return FIRST_PAGE_DELAY;
-        return fromCache ? CACHE_DELAY : 0;
-    }
-
-    function finishLoad(token, hasMore, fromCache, loadedPage) {
-        var delay = paginationDelay(loadedPage, fromCache, hasMore);
-        loading = false;
-        page.loading = false;
-
-        if (!delay) {
-            page.haveMore(hasMore);
-            return;
-        }
-        setTimeout(function () {
-            if (token !== loadToken) return;
-            page.haveMore(hasMore);
-        }, delay);
-    }
-
-    function loader() {
-        if (loading) return;
-        loading = true;
-        if (page.entries === 0) page.loading = true;
-
-        var token = loadToken;
-
-        var loadTimeout = setTimeout(function () {
-            if (token !== loadToken) return;
-            loadToken++;
-            loading = false;
-            page.loading = false;
-        }, LOAD_TIMEOUT);
-
-        api.catalog(nPage, function (err, data, fromCache) {
-            clearTimeout(loadTimeout);
-            if (token !== loadToken) return;
-
-            if (err) {
-                ui.renderError(page, 'Ошибка загрузки каталога');
-                page.haveMore(false);
-                loading = false;
-                page.loading = false;
-                return;
-            }
-
-            var items = fmt.catalog(data);
-            ui.renderCatalog(page, items);
-
-            var loadedPage = nPage;
-            nPage++;
-
-            var hasMore = data.data && data.data.length >= PAGE_SIZE;
-            finishLoad(token, hasMore, fromCache, loadedPage);
-
-            if (fromCache && hasMore && nPage <= 3) {
-                setTimeout(loader, 10);
-            }
-        });
-    }
-
-    page.asyncPaginator = loader;
-    loader();
-    initialized = true;
+    setupCatalogPage(page, 'Каталог');
 });
 
 // === Расписание ===
@@ -268,14 +164,14 @@ new page.Route(PREFIX + ':schedule', function (page) {
     page.metadata.title = 'Расписание';
     page.loading = true;
 
-    api.schedule(function (err, data) {
+    api.schedule(function (err, result) {
         page.loading = false;
         if (err) {
             ui.renderError(page, 'Ошибка загрузки расписания');
             return;
         }
         // API returns { data: [scheduleItem, ...] }
-        ui.renderSchedule(page, data.data || []);
+        ui.renderSchedule(page, result.data.data || []);
     });
 });
 
@@ -285,29 +181,24 @@ new page.Route(PREFIX + ':release:(.*)', function (page, id) {
     page.metadata.title = 'Загрузка...';
     page.loading = true;
 
-    api.release(id, function (err, release) {
+    releaseView.load(id, LOGO, function (err, model) {
+        page.loading = false;
         if (err) {
-            page.loading = false;
             ui.renderError(page, 'Ошибка загрузки релиза');
             return;
         }
 
-        api.franchise(id, function (fErr, franchiseData) {
-            page.loading = false;
+        ui.renderRelease(page, model);
 
-            var franchise = fmt.franchise(franchiseData, id);
-            ui.renderRelease(page, release, franchise);
-
-            // Resume: предложить продолжить просмотр
-            var rc = resume.config;
-            if (rc.enabled) {
-                resume.find(page, page.getItems(), {
-                    autoResume: rc.autoResume,
-                    findNext: rc.findNext,
-                    delay: rc.delay
-                });
-            }
-        });
+        // Resume: предложить продолжить просмотр
+        var rc = resume.config;
+        if (rc.enabled) {
+            resume.find(page, page.getItems(), {
+                autoResume: rc.autoResume,
+                findNext: rc.findNext,
+                delay: rc.delay
+            });
+        }
     });
 });
 

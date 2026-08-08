@@ -1,0 +1,77 @@
+#import "common.view"
+
+widget(container_z, {
+  focusable: true;
+  onEvent(activate, navOpen($self.url));
+
+  // Background with primary color from poster
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
+
+  // Poster/screenshot with throbber
+  widget(container_z, {
+    widget(throbber, {
+      alpha: 1.0;
+      hidden: !$clone.isLoading;
+    });
+    widget(image, {
+      $clone.isLoading = isLoading();
+      source: $self.metadata.icon;
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      color: 0.8 + iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.4;
+      aspectConstraint: true;
+    });
+  });
+
+  // Watched indicator (top-right)
+  widget(container_y, {
+    hidden: !($self.metadata.playcount > 0);
+    widget(container_x, {
+      align: right;
+      margin: [0.5em, 0.5em, 0, 0];
+      widget(icon, {
+        source: "img/check.png";
+        width: 2.5em;
+        height: 2.5em;
+      });
+    });
+  });
+
+  // Title overlay (bottom)
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
+    padding: [0, 1.1em, 0, 0];
+    widget(label, {
+      caption: $self.metadata.title;
+      padding: [0, 0.15em];
+      align: bottom;
+      autohide: true;
+      bgalpha: 0.8;
+    });
+  });
+
+  // Progress / duration subtitle
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
+    hidden: !($self.metadata.description);
+    widget(label, {
+      caption: $self.metadata.description;
+      padding: [0, 0.15em];
+      align: bottom;
+      autohide: true;
+      bgalpha: 0.7;
+      sizeScale: 0.8;
+    });
+  });
+
+  // Focus/hover border
+  widget(border, {
+    border: 0.1em;
+    color: iir(isNavFocused() + isHovered() + isPressed(), 4);
+    alpha: 0.8;
+  });
+});

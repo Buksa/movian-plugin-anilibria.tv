@@ -1,0 +1,244 @@
+// Release detail layout: poster metadata on the left, focusable episodes on the right.
+// The split follows the pilot-series pattern so the first episode rows are visible
+// in the initial viewport instead of being placed below an oversized hero.
+#import "common.view"
+
+$self.model.metadata.background = $self.model.metadata.poster_landscape;
+
+widget(container_z, {
+  // Keep the artwork as atmosphere, not as the content surface.
+  widget(quad, {
+    color: [0.025, 0.035, 0.075];
+    alpha: 0.58;
+  });
+
+  widget(container_y, {
+    padding: [1em, 1.4em];
+    spacing: 0.8em;
+
+    // Page heading.
+    widget(container_x, {
+      height: 3.2em;
+      spacing: 1em;
+
+      widget(container_y, {
+        filterConstraintX: true;
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 2.1;
+          maxlines: 1;
+        });
+        widget(label, {
+          hidden: !$self.model.metadata.subtitle;
+          caption: $self.model.metadata.subtitle;
+          sizeScale: 0.9;
+          color: 0.75;
+          maxlines: 1;
+        });
+      });
+
+      widget(dummy, { });
+
+      widget(container_z, {
+        hidden: !$self.model.metadata.status;
+        width: 7.5em;
+        height: 1.7em;
+        align: center;
+        widget(quad, {
+          color: [0.15, 0.55, 0.38];
+          alpha: 0.8;
+        });
+        widget(label, {
+          caption: $self.model.metadata.status;
+          align: center;
+          sizeScale: 0.85;
+        });
+      });
+    });
+
+    // Main content: compact metadata column + navigable episode list.
+    widget(container_x, {
+      height: $ui.height * 0.82;
+      spacing: 1.4em;
+
+      // Poster and release metadata.
+      widget(container_y, {
+        weight: 1;
+        filterConstraintX: true;
+        spacing: 0.45em;
+
+        widget(container_z, {
+          width: 10.5em;
+          height: 13.5em;
+          widget(throbber, {
+            alpha: 1.0;
+            hidden: !$clone.isLoading;
+          });
+          widget(image, {
+            $clone.isLoading = isLoading();
+            source: $self.model.metadata.poster;
+            aspectConstraint: true;
+          });
+          widget(border, {
+            border: 0.1em;
+            color: 1;
+            alpha: 0.7;
+          });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 1.2;
+          maxlines: 2;
+        });
+
+        widget(container_x, {
+          spacing: 0.7em;
+          widget(label, {
+            caption: $self.model.metadata.year;
+            sizeScale: 0.95;
+            color: 0.85;
+          });
+          widget(label, {
+            hidden: !$self.model.metadata.ageRating;
+            caption: "• " + $self.model.metadata.ageRating;
+            sizeScale: 0.95;
+            color: 0.85;
+          });
+        });
+
+        LABEL("Жанры:", $self.model.metadata.genres);
+
+        widget(label, {
+          hidden: !$self.model.metadata.description;
+          caption: $self.model.metadata.description;
+          RichTextItem();
+          maxlines: 7;
+          sizeScale: 0.92;
+          color: 0.9;
+        });
+
+        widget(dummy, { });
+
+        widget(container_z, {
+          hidden: !$self.model.metadata.resumeCandidate;
+          height: 3.2em;
+          widget(quad, {
+            color: [0.18, 0.32, 0.65];
+            alpha: 0.85;
+          });
+          widget(label, {
+            caption: "Продолжить: " +
+              $self.model.metadata.resumeCandidate.title + "  " +
+              $self.model.metadata.resumeCandidate.progress + "%";
+            padding: [0.4em, 0.6em];
+            maxlines: 1;
+          });
+        });
+      });
+
+      // Episodes stay in a list_y so focus navigation can reveal all rows.
+      widget(container_y, {
+        weight: 2.4;
+        filterConstraintX: true;
+        spacing: 0.45em;
+
+        widget(container_x, {
+          height: 2.2em;
+          spacing: 0.7em;
+          widget(label, {
+            caption: "ЭПИЗОДЫ";
+            sizeScale: 1.35;
+          });
+          widget(label, {
+            hidden: !$self.model.metadata.episodes_total;
+            caption: $self.model.metadata.episodes_total;
+            sizeScale: 0.9;
+            color: 0.8;
+          });
+          widget(dummy, { });
+          widget(label, {
+            hidden: !$self.model.metadata.genres;
+            caption: $self.model.metadata.genres;
+            sizeScale: 0.75;
+            color: 0.65;
+            autohide: true;
+          });
+        });
+
+        widget(container_x, {
+          height: $ui.height * 0.68;
+
+          widget(list_y, {
+            .id = "episodes";
+            spacing: 0.45em;
+            cloner($self.model.nodes, container_z, {
+              height: 4.7em;
+              focusable: 0.5;
+              onEvent(activate, navOpen($self.url));
+
+              widget(quad, {
+                color: [1, 1, 1];
+                alpha: select(isNavFocused(), 0.14, 0.035);
+              });
+
+              widget(container_x, {
+                spacing: 0.8em;
+                padding: [0.2em, 0.35em];
+
+                widget(container_z, {
+                  width: 3.3em;
+                  widget(image, {
+                    source: $self.metadata.icon;
+                    aspectConstraint: true;
+                    color: 0.85 +
+                      iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.15;
+                  });
+                  widget(label, {
+                    hidden: !$self.episode;
+                    caption: "EP " + $self.episode;
+                    sizeScale: 0.9;
+                    padding: [0.15em, 0.25em];
+                    align: bottomLeft;
+                    bgalpha: 0.8;
+                  });
+                });
+
+                widget(container_y, {
+                  filterConstraintX: true;
+                  align: center;
+                  spacing: 0.2em;
+
+                  widget(container_x, {
+                    spacing: 0.5em;
+                    widget(label, {
+                      caption: $self.metadata.title;
+                      sizeScale: 1.05;
+                      maxlines: 1;
+                    });
+                    widget(dummy, { });
+                    widget(label, {
+                      hidden: !$self.metadata.description;
+                      caption: $self.metadata.description;
+                      sizeScale: 0.78;
+                      color: 0.8;
+                      align: right;
+                    });
+                  });
+
+                  widget(border, {
+                    border: 0.1em;
+                    color: 1;
+                    alpha: iir(isNavFocused() + isHovered() + isPressed(), 4);
+                  });
+                });
+              });
+            });
+          });
+
+          LIST_Y_SLIDER("episodes", true);
+        });
+      });
+    });
+  });
+});

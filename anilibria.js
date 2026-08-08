@@ -106,6 +106,7 @@ function setupCatalogPage(page, title) {
     page.model.contents = 'grid';
 
     var pager = pagination.create({
+        maxPrefetchPage: 1,
         loadPage: function (pageNumber, callback) {
             api.catalog(pageNumber, function (err, result) {
                 if (err) {

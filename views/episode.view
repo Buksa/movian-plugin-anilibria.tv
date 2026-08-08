@@ -1,0 +1,3 @@
+widget(loader, {
+  source: select($ui.aspect > 1.1, "itemviews/episode_landscape.view", "itemviews/episode_portrait.view");
+});

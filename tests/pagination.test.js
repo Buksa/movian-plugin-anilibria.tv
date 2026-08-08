@@ -51,7 +51,8 @@ FakeClock.prototype.runAll = function () {
     while (this.runNext()) {}
 };
 
-function harness() {
+function harness(options) {
+    options = options || {};
     var clock = new FakeClock();
     var loads = [];
     var events = {
@@ -64,6 +65,7 @@ function harness() {
 
     var pager = pagination.create({
         scheduler: clock,
+        maxPrefetchPage: options.maxPrefetchPage,
         loadPage: function (pageNumber, callback) {
             loads.push({ page: pageNumber, callback: callback });
         },
@@ -167,6 +169,20 @@ test('prefetches cached pages through page three only', function () {
     h.clock.runAll();
 
     assert.deepStrictEqual(h.loads.map(function (load) { return load.page; }), [1, 2, 3]);
+});
+
+test('does not prefetch cached pages when the limit is one', function () {
+    var h = harness({ maxPrefetchPage: 1 });
+
+    h.pager.load();
+    h.loads[0].callback(null, {
+        items: ['one'],
+        hasMore: true,
+        cacheHit: true
+    });
+    h.clock.runAll();
+
+    assert.deepStrictEqual(h.loads.map(function (load) { return load.page; }), [1]);
 });
 
 test('ignores a callback after timeout cancellation', function () {

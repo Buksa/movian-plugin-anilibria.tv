@@ -1,0 +1,314 @@
+// views/common.view — GLW macros for anilibria
+
+#define RichTextItem() {
+  shadow: true;
+  outline: true;
+}
+
+#define boldStr(STR) {
+  '<b>' + (STR || '') + '</b>'
+}
+
+#define coloredStr(STR, COLOR) {
+  '<font color="' + COLOR + '">' + (STR || '') + '</font>'
+}
+
+#define sizedStr(STR, SIZE) {
+  '<font size="' + SIZE + '">' + (STR || '') + '</font>'
+}
+
+#define separator(TITLE) {
+  widget(container_x, {
+    widget(label, {
+      RichTextItem();
+      caption: TITLE;
+      sizeScale: 1.3;
+      color: 0.8;
+    });
+  });
+}
+
+#define IMAGE(IMAGE, WIDTH) {
+  widget(fader, {
+    filterConstraintY: true;
+    width: WIDTH;
+    plane: [0,1,0,1];
+    alphaFallOff: 1;
+    blurFallOff: 0.2;
+    widget(mirror, {
+      alpha: 0.6;
+      widget(stencil, {
+        source: "skin://graphics/stencil.png";
+        widget(image, {
+          $clone.ready = isReady();
+          source: IMAGE;
+          color: 0.75;
+          saturation: 1 - iir(isReady(), 10);
+        });
+        widget(container_y, {
+          space(1);
+          widget(throbber, {
+            alpha: iir(!$clone.ready, 8);
+          });
+          space(1);
+        });
+      });
+    });
+  });
+}
+
+#define POSTER(IMAGE, HEIGHT) {
+  widget(container_z, {
+    height: HEIGHT;
+    widget(container_z, {
+      widget(throbber, {
+        alpha: 1.0;
+        hidden: !$clone.isLoading;
+      });
+      widget(image, {
+        $clone.isLoading = isLoading();
+        margin: [0.5em, 0.5em];
+        source: IMAGE;
+        $view.posterPrimaryColor = RGBToString(primaryColor() * 0.3);
+      });
+    });
+  });
+}
+
+#define LABEL(TITLE, TEXT) {
+  widget(container_x, {
+    hidden: !(TEXT && TEXT != "N/A");
+    widget(label, {
+      RichTextItem();
+      caption: TITLE + " ";
+      align: left;
+      color: 0.75;
+      sizeScale: 1.2;
+    });
+    widget(label, {
+      RichTextItem();
+      caption: TEXT;
+      align: left;
+      maxlines: 5;
+      color: 1.0;
+      sizeScale: 1.2;
+    });
+  });
+}
+
+#define TITLE(TEXT, HIDDEN) {
+  widget(label, {
+    hidden: HIDDEN;
+    margin: [0, 0, 1.5em, 0];
+    caption: TEXT;
+    RichTextItem();
+    sizeScale: 2;
+  });
+}
+
+#define ACTION_ROW(TITLE, ICON, EVENT, HIDDEN, FOCUSABLE) {
+  widget(container_x, {
+    hidden: HIDDEN;
+    focusable: FOCUSABLE;
+    widget(container_z, {
+      widget(quad, {
+        fhpSpill: true;
+        additive: true;
+        height: 3em;
+        color: "#212121";
+        alpha: 0.6 + 0.4 * iir(isNavFocused() + isPressed() + isHovered(), 4, true);
+      });
+      widget(container_x, {
+        padding: [0.5em, 0.5em];
+        spacing: 0.2em;
+        widget(image, {
+          margin: [0.1em, 0.1em];
+          height: 3em;
+          source: ICON;
+          color: "#0F0F0F";
+          alpha: 0.5 + 0.5 * (isHovered() + isNavFocused() + isPressed());
+          hidden: !(ICON);
+        });
+        widget(label, {
+          caption: TITLE;
+          padding: [0.5em, 0];
+          align: center;
+        });
+      });
+      widget(border, {
+        border: 0.1em;
+        color: "#FFFFFF";
+        alpha: 0.8 * (isHovered() + isNavFocused() + isPressed());
+      });
+    });
+    onEvent(activate, EVENT);
+  });
+}
+
+#define EPISODE_ITEM(TITLE, SUBTITLE, IMAGE, WATCHED, EVENT) {
+  widget(container_z, {
+    focusable: true;
+    onEvent(activate, EVENT);
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
+    widget(container_z, {
+      widget(throbber, {
+        alpha: 1.0;
+        hidden: !$clone.isLoading;
+      });
+      widget(image, {
+        $clone.isLoading = isLoading();
+        source: IMAGE;
+        $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+        color: 0.8 + iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.4;
+        aspectConstraint: true;
+      });
+    });
+    widget(container_y, {
+      hidden: !WATCHED;
+      widget(container_x, {
+        align: right;
+        widget(icon, {
+          source: "img/check.png";
+          width: 2.5em;
+          height: 2.5em;
+        });
+      });
+    });
+    widget(container_y, {
+      filterConstraintY: true;
+      align: bottom;
+      padding: [0, 1.1em, 0, 0];
+      widget(label, {
+        caption: TITLE;
+        padding: [0, 0.15em];
+        align: bottom;
+        autohide: true;
+        bgalpha: 0.8;
+      });
+    });
+    widget(container_y, {
+      filterConstraintY: true;
+      align: bottom;
+      hidden: !SUBTITLE;
+      widget(label, {
+        caption: SUBTITLE;
+        padding: [0, 0.15em];
+        align: bottom;
+        autohide: true;
+        bgalpha: 0.7;
+        sizeScale: 0.8;
+      });
+    });
+    widget(border, {
+      border: 0.1em;
+      color: iir(isNavFocused() + isHovered() + isPressed(), 4);
+      alpha: 0.8;
+    });
+  });
+}
+
+#define IMAGE_ITEM(TITLE, SUBTITLE, IMAGE, EVENT, HIDDEN, FOCUSABLE) {
+  widget(container_z, {
+    hidden: HIDDEN;
+    focusable: FOCUSABLE;
+    onEvent(activate, EVENT);
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
+    widget(container_z, {
+      widget(throbber, {
+        alpha: 1.0;
+        hidden: !$clone.isLoading;
+      });
+      widget(image, {
+        $clone.isLoading = isLoading();
+        source: IMAGE;
+        $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+        color: 0.8 + iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.4;
+        aspectConstraint: true;
+      });
+    });
+    widget(container_y, {
+      filterConstraintY: true;
+      align: bottom;
+      padding: [0, 1.1em, 0, 0];
+      widget(label, {
+        caption: TITLE;
+        padding: [0, 0.15em];
+        align: bottom;
+        autohide: true;
+        bgalpha: 0.8;
+      });
+    });
+    widget(container_y, {
+      filterConstraintY: true;
+      align: bottom;
+      hidden: !SUBTITLE;
+      widget(label, {
+        caption: SUBTITLE;
+        padding: [0, 0.15em];
+        align: bottom;
+        autohide: true;
+        bgalpha: 0.7;
+        sizeScale: 0.8;
+      });
+    });
+    widget(border, {
+      border: 0.1em;
+      color: iir(isNavFocused() + isHovered() + isPressed(), 4);
+      alpha: 0.8;
+    });
+  });
+}
+
+#define TEXT(CONTENT, ALIGN) {
+  widget(container_x, {
+    widget(list_y, {
+      .id = "bodytext";
+      widget(label, {
+        RichTextItem();
+        caption: CONTENT;
+        maxlines: 50;
+        align: ALIGN;
+        bold: false;
+        sizeScale: 1.2;
+      });
+    });
+    LIST_Y_SLIDER("bodytext", true);
+  });
+}
+
+#define LIST_Y_SLIDER(ID, FOCUSABLE) {
+  widget(slider_y, {
+    bind: ID;
+    width: 24;
+    focusable: 0.2 * canScroll();
+    navFocusable: FOCUSABLE;
+    alpha: iir(canScroll(), 16);
+    widget(container_x, {
+      padding: [0.2em, 0, 0.2em, 0];
+      widget(quad, {
+        alpha: 0.6 + isHovered();
+      });
+    });
+  });
+}
+
+#define STAR_FULL() {
+  widget(icon, {
+    color: [1, 1, 0.2];
+    source: "dataroot://resources/svg/Star.svg";
+  });
+}
+
+#define STAR_DIMMED() {
+  widget(icon, {
+    color: [0.33, 0.33, 0];
+    shadow: true;
+    source: "dataroot://resources/svg/Star.svg";
+  });
+}

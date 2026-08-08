@@ -1,0 +1,79 @@
+#import "common.view"
+
+widget(container_z, {
+  focusable: true;
+  onEvent(activate, navOpen($self.url));
+
+  // Background with primary color
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
+
+  // Poster
+  widget(container_z, {
+    widget(throbber, {
+      alpha: 1.0;
+      hidden: !$clone.isLoading;
+    });
+    widget(image, {
+      $clone.isLoading = isLoading();
+      source: $self.metadata.icon;
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      color: 0.8 + iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.4;
+      aspectConstraint: true;
+    });
+  });
+
+  // Active badge
+  widget(container_y, {
+    hidden: !($self.metadata.isActive);
+    widget(container_x, {
+      align: right;
+      margin: [0.5em, 0.5em, 0, 0];
+      widget(label, {
+        caption: "🟢 Активный";
+        padding: [0.2em, 0.5em];
+        bgalpha: 0.9;
+        color: 0;
+        sizeScale: 0.8;
+      });
+    });
+  });
+
+  // Title overlay
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
+    padding: [0, 1.1em, 0, 0];
+    widget(label, {
+      caption: $self.metadata.title;
+      padding: [0, 0.15em];
+      align: bottom;
+      autohide: true;
+      bgalpha: 0.8;
+    });
+  });
+
+  // Year + type subtitle
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
+    hidden: !($self.metadata.subtitle);
+    widget(label, {
+      caption: $self.metadata.subtitle;
+      padding: [0, 0.15em];
+      align: bottom;
+      autohide: true;
+      bgalpha: 0.7;
+      sizeScale: 0.8;
+    });
+  });
+
+  // Focus/hover border
+  widget(border, {
+    border: 0.1em;
+    color: iir(isNavFocused() + isHovered() + isPressed(), 4);
+    alpha: 0.8;
+  });
+});

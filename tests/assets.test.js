@@ -16,10 +16,8 @@ function test(name, fn) {
     }
 }
 
-test('builds medium and large images with mirror fallbacks', function () {
+test('builds distinct primary images without duplicate URLs', function () {
     var value = assets.imageSet({
-        preview: '/preview.jpg',
-        src: '/src.jpg',
         optimized: {
             preview: '/preview.webp',
             src: '/src.webp'
@@ -36,16 +34,6 @@ test('builds medium and large images with mirror fallbacks', function () {
             url: 'https://static-libria.weekstorm.one/src.webp',
             width: 600,
             height: 900
-        },
-        {
-            url: 'https://static.anilibria.tv/preview.webp',
-            width: 400,
-            height: 600
-        },
-        {
-            url: 'https://static.anilibria.tv/src.webp',
-            width: 600,
-            height: 900
         }
     ]);
 });
@@ -60,21 +48,6 @@ test('falls back from optimized fields to poster fields', function () {
             url: 'https://static-libria.weekstorm.one/preview.jpg',
             width: 400,
             height: 600
-        },
-        {
-            url: 'https://static-libria.weekstorm.one/preview.jpg',
-            width: 600,
-            height: 900
-        },
-        {
-            url: 'https://static.anilibria.tv/preview.jpg',
-            width: 400,
-            height: 600
-        },
-        {
-            url: 'https://static.anilibria.tv/preview.jpg',
-            width: 600,
-            height: 900
         }
     ]);
 });

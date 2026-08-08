@@ -1,7 +1,7 @@
 var assert = require('assert');
 var Module = require('module');
 
-function loadReleaseView(api, fmt, assets) {
+function loadReleaseView(api, releaseModel) {
     var originalLoad = Module._load;
     var viewPath = require.resolve('../lib/release-view');
 
@@ -9,8 +9,7 @@ function loadReleaseView(api, fmt, assets) {
 
     Module._load = function (request) {
         if (request === './api') return api;
-        if (request === './formatters') return fmt;
-        if (request === './assets') return assets;
+        if (request === './release-model') return releaseModel;
         return originalLoad.apply(this, arguments);
     };
 
@@ -31,102 +30,86 @@ function test(name, fn) {
     }
 }
 
-function fakeFormatters() {
-    return {
-        franchise: function (data, id) {
-            return data ? {
-                id: id,
-                title: 'Franchise title',
-                releases: data
-            } : null;
-        },
-        episodes: function (release) {
-            return ['episode:' + release.id];
-        },
-        torrents: function (release) {
-            return ['torrent:' + release.id];
-        }
-    };
-}
-
-test('composes a complete release render model', function () {
+test('loads release before franchise and delegates model composition', function () {
     var release = {
-        id: 7,
-        name: { main: 'Release', english: 'English release' },
-        poster: { src: '/poster.jpg' },
+        id: 10,
+        name: { main: 'Release' },
         description: 'Description'
     };
+    var franchiseData = [{ franchise_releases: [] }];
+    var events = [];
+    var calls = [];
+    var expected = { marker: true };
     var api = {
         release: function (id, callback) {
-            assert.strictEqual(id, 7);
+            events.push('release');
+            assert.strictEqual(id, 10);
             callback(null, { data: release });
         },
         franchise: function (id, callback) {
-            assert.strictEqual(id, 7);
-            callback(null, { data: ['related-release'] });
+            events.push('franchise');
+            assert.strictEqual(id, 10);
+            callback(null, { data: franchiseData });
         }
     };
-    var assets = {
-        imageSet: function (poster) {
-            assert.strictEqual(poster, release.poster);
-            return 'imageset:release';
+    var releaseModel = {
+        build: function (value, valueFranchise, fallbackLogo, id) {
+            events.push('build');
+            calls.push({
+                release: value,
+                franchise: valueFranchise,
+                fallbackLogo: fallbackLogo,
+                id: id
+            });
+            return expected;
         }
     };
-    var view = loadReleaseView(api, fakeFormatters(), assets);
-    var model;
+    var view = loadReleaseView(api, releaseModel);
+    var observed;
 
-    view.load(7, 'logo.png', function (err, result) {
-        assert.strictEqual(err, null);
-        model = result;
+    view.load(10, 'logo.png', function (err, model) {
+        observed = { err: err, model: model };
     });
 
-    assert.deepStrictEqual(model, {
-        metadata: {
-            title: 'Release',
-            subtitle: 'English release',
-            logo: 'imageset:release'
-        },
-        description: 'Description',
-        franchise: {
-            id: 7,
-            title: 'Franchise title',
-            releases: ['related-release']
-        },
-        episodes: ['episode:7'],
-        torrents: ['torrent:7']
-    });
+    assert.deepStrictEqual(events, ['release', 'franchise', 'build']);
+    assert.deepStrictEqual(calls, [{
+        release: release,
+        franchise: franchiseData,
+        fallbackLogo: 'logo.png',
+        id: 10
+    }]);
+    assert.strictEqual(observed.err, null);
+    assert.strictEqual(observed.model, expected);
 });
 
-test('uses fallback logo and omits failed optional franchise', function () {
+test('keeps release usable when optional franchise lookup fails', function () {
+    var failure = new Error('franchise unavailable');
+    var receivedFranchise;
+    var expected = { marker: true };
     var api = {
         release: function (id, callback) {
-            callback(null, {
-                data: {
-                    id: id,
-                    name: { main: 'No poster' },
-                    description: ''
-                }
-            });
+            callback(null, { data: { id: id, name: { main: 'Release' } } });
         },
         franchise: function (id, callback) {
-            callback(new Error('franchise unavailable'));
+            callback(failure);
         }
     };
-    var assets = {
-        imageSet: function () {
-            return undefined;
+    var releaseModel = {
+        build: function (release, franchiseData) {
+            receivedFranchise = franchiseData;
+            return expected;
         }
     };
-    var view = loadReleaseView(api, fakeFormatters(), assets);
-    var model;
+    var view = loadReleaseView(api, releaseModel);
+    var observed;
 
-    view.load(8, 'logo.png', function (err, result) {
-        assert.strictEqual(err, null);
-        model = result;
+    view.load(11, 'logo.png', function (err, model) {
+        observed = { err: err, model: model };
     });
 
-    assert.strictEqual(model.metadata.logo, 'logo.png');
-    assert.strictEqual(model.franchise, null);
+    assert.strictEqual(receivedFranchise, null);
+    assert.strictEqual(observed.err, null);
+    assert.strictEqual(observed.model, expected);
 });
 
 test('stops before franchise when release fails', function () {
@@ -140,9 +123,12 @@ test('stops before franchise when release fails', function () {
             franchiseCalled = true;
         }
     };
-    var view = loadReleaseView(api, fakeFormatters(), {
-        imageSet: function () { return undefined; }
-    });
+    var releaseModel = {
+        build: function () {
+            throw new Error('model should not be built');
+        }
+    };
+    var view = loadReleaseView(api, releaseModel);
     var observed;
 
     view.load(9, 'logo.png', function (err, model) {

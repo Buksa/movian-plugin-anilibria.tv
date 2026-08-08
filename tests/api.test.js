@@ -10,23 +10,13 @@ function response(statuscode, body) {
     };
 }
 
-function makeHttp(dns, endpoint) {
+function makeHttp(endpoint) {
     var calls = [];
 
     return {
         calls: calls,
         request: function (url, options, callback) {
             calls.push({ url: url, options: options });
-
-            if (url.indexOf('https://dns.google') === 0) {
-                if (dns.error) {
-                    callback(dns.error);
-                } else {
-                    callback(null, response(200, dns.body));
-                }
-                return;
-            }
-
             endpoint(url, options, callback);
         }
     };
@@ -35,9 +25,13 @@ function makeHttp(dns, endpoint) {
 function loadApi(http) {
     var originalLoad = Module._load;
     var apiPath = require.resolve('../lib/api');
+    var configPath = require.resolve('../lib/config');
+    var transportPath = require.resolve('../lib/transport');
     var inspector = function () {};
 
     delete require.cache[apiPath];
+    delete require.cache[configPath];
+    delete require.cache[transportPath];
 
     Module._load = function (request) {
         if (request === 'movian/http') return http;
@@ -66,9 +60,7 @@ function test(name, fn) {
 
 test('returns normalized endpoint data and cache metadata', function () {
     var payload = { data: [{ id: 7 }] };
-    var http = makeHttp({
-        body: { Answer: [{ data: '"anilibria.top=mirror.example"' }] }
-    }, function (url, options, callback) {
+    var http = makeHttp(function (url, options, callback) {
         callback(null, response(200, payload));
     });
     var api = loadApi(http);
@@ -84,13 +76,15 @@ test('returns normalized endpoint data and cache metadata', function () {
         cacheHit: false
     });
     assert.strictEqual(observed.argc, 2);
-    assert.ok(http.calls[1].url.indexOf('https://mirror.example/api/v1/') === 0);
-    assert.strictEqual(http.calls[1].options.caching, true);
-    assert.strictEqual(http.calls[1].options.cacheTime, 120);
+    assert.ok(http.calls[0].url.indexOf('https://api.anilibria.app/api/v1/') === 0);
+    assert.strictEqual(http.calls[0].options.caching, true);
+    assert.strictEqual(http.calls[0].options.cacheTime, 120);
+    assert.strictEqual(http.calls[0].options.compression, true);
+    assert.strictEqual(http.calls[0].options.headers['Accept-Encoding'], undefined);
 });
 
 test('normalizes Movian cache status without exposing the response', function () {
-    var http = makeHttp({ body: { Answer: [] } }, function (url, options, callback) {
+    var http = makeHttp(function (url, options, callback) {
         callback(null, response(0, { data: [] }));
     });
     var api = loadApi(http);
@@ -107,29 +101,8 @@ test('normalizes Movian cache status without exposing the response', function ()
     });
 });
 
-test('uses the default URL when DNS discovery fails', function () {
-    var http = makeHttp({ error: new Error('DNS offline') }, function (url, options, callback) {
-        callback(null, response(200, { data: [] }));
-    });
-    var api = loadApi(http);
-    var result;
-
-    api.setCacheEnabled(false);
-    api.catalog(1, function (err, value) {
-        assert.strictEqual(err, null);
-        result = value;
-    });
-
-    assert.deepStrictEqual(result, {
-        data: { data: [] },
-        cacheHit: false
-    });
-    assert.ok(http.calls[1].url.indexOf('https://api.anilibria.app/api/v1/') === 0);
-    assert.strictEqual(http.calls[1].options.caching, undefined);
-});
-
 test('returns HTTP and JSON failures through the endpoint seam', function () {
-    var httpStatus = makeHttp({ body: { Answer: [] } }, function (url, options, callback) {
+    var httpStatus = makeHttp(function (url, options, callback) {
         callback(null, response(503, '{}'));
     });
     var apiStatus = loadApi(httpStatus);
@@ -144,7 +117,7 @@ test('returns HTTP and JSON failures through the endpoint seam', function () {
     assert.strictEqual(statusError.message, 'HTTP 503');
     assert.strictEqual(statusResult, undefined);
 
-    var httpJson = makeHttp({ body: { Answer: [] } }, function (url, options, callback) {
+    var httpJson = makeHttp(function (url, options, callback) {
         callback(null, response(200, '{not json'));
     });
     var apiJson = loadApi(httpJson);
@@ -157,8 +130,8 @@ test('returns HTTP and JSON failures through the endpoint seam', function () {
     assert.ok(jsonError.message.indexOf('JSON parse error:') === 0);
 });
 
-test('keeps franchise optional while using the normalized result shape', function () {
-    var http = makeHttp({ body: { Answer: [] } }, function (url, options, callback) {
+test('propagates franchise transport failures through the endpoint seam', function () {
+    var http = makeHttp(function (url, options, callback) {
         callback(null, response(503, '{}'));
     });
     var api = loadApi(http);
@@ -168,15 +141,12 @@ test('keeps franchise optional while using the normalized result shape', functio
         observed = { err: err, result: result };
     });
 
-    assert.strictEqual(observed.err, null);
-    assert.deepStrictEqual(observed.result, {
-        data: null,
-        cacheHit: false
-    });
+    assert.strictEqual(observed.err.message, 'HTTP 503');
+    assert.strictEqual(observed.result, undefined);
 });
 
 test('manual base URL skips mirror discovery', function () {
-    var http = makeHttp({ body: { Answer: [] } }, function (url, options, callback) {
+    var http = makeHttp(function (url, options, callback) {
         callback(null, response(200, { data: [] }));
     });
     var api = loadApi(http);

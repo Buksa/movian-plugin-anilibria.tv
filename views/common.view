@@ -284,7 +284,7 @@
 
 #define LIST_Y_SLIDER(ID, FOCUSABLE) {
   widget(slider_y, {
-    bind: ID;
+    bind(ID);
     width: 24;
     focusable: 0.2 * canScroll();
     navFocusable: FOCUSABLE;

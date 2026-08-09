@@ -17,6 +17,8 @@ var plugin = JSON.parse(Plugin.manifest);
 var PREFIX = fmt.PREFIX;
 var LOGO = Plugin.path + plugin.icon;
 var PAGE_SIZE = 25;
+var RELEASE_VIEW = Plugin.path + 'views/release.view';
+var CATALOG_VIEW = Plugin.path + 'views/grid_video_switcher.view';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Сервис (иконка в меню Movian)
@@ -101,9 +103,14 @@ page.Searcher(plugin.title, LOGO, function (page, query) {
 
 // === Каталог с пагинацией ===
 function setupCatalogPage(page, title) {
-    //page.type = 'directory';
+    page.type = 'raw';
     page.metadata.title = title;
+    page.metadata.icon = LOGO;
+    page.metadata.glwview = CATALOG_VIEW;
+    page.metadata.error = '';
     page.model.contents = 'grid';
+    page.entries = 0;
+    page.loading = true;
 
     var pager = pagination.create({
         maxPrefetchPage: 1,
@@ -132,11 +139,13 @@ function setupCatalogPage(page, title) {
         },
 
         onItems: function (items) {
+            page.metadata.error = '';
             ui.renderCatalog(page, items);
         },
 
-        onError: function () {
-            ui.renderError(page, 'Ошибка загрузки каталога');
+        onError: function (error) {
+            page.metadata.error = 'Ошибка загрузки каталога: ' +
+                (error && error.message ? error.message : 'повторите попытку');
         },
 
         onHaveMore: function (hasMore) {
@@ -146,7 +155,6 @@ function setupCatalogPage(page, title) {
 
     page.asyncPaginator = pager.load;
     pager.load();
-    page.type = 'directory';
 }
 
 // === Главная ===
@@ -178,18 +186,25 @@ new page.Route(PREFIX + ':schedule', function (page) {
 
 // === Страница релиза ===
 new page.Route(PREFIX + ':release:(.*)', function (page, id) {
-    page.type = 'directory';
+    var releaseUrl = PREFIX + ':release:' + id;
+
+    page.type = 'raw';
+    page.metadata.glwview = RELEASE_VIEW;
     page.metadata.title = 'Загрузка...';
+    page.metadata.retryUrl = releaseUrl;
+    page.model.error = '';
     page.loading = true;
 
     releaseView.load(id, LOGO, function (err, model) {
-        page.loading = false;
         if (err) {
-            ui.renderError(page, 'Ошибка загрузки релиза');
+            page.metadata.title = 'Не удалось загрузить релиз';
+            page.model.error = 'Ошибка загрузки релиза: ' +
+                (err.message || String(err));
+            page.loading = false;
             return;
         }
 
-        ui.renderRelease(page, model);
+        ui.renderRelease(page, model, RELEASE_VIEW, releaseUrl);
 
         // Resume: предложить продолжить просмотр
         var rc = resume.config;

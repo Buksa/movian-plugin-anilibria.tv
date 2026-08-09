@@ -1,0 +1,149 @@
+// Prototype 7: Poster sidebar + episode carousel
+// A gallery-like composition that treats the episode rail as the primary action.
+#import "../release_components.view"
+
+widget(container_z, {
+  widget(quad, {
+    color: [0.035, 0.045, 0.085];
+  });
+
+  widget(container_y, {
+    padding: [1em, 1.3em];
+    spacing: 0.7em;
+
+    widget(container_x, {
+      height: 2.8em;
+      spacing: 0.8em;
+      widget(label, {
+        caption: "ANILIBRIA / RELEASE";
+        sizeScale: 0.82;
+        color: [0.45, 0.7, 1.0];
+      });
+      widget(dummy, { });
+      widget(label, {
+        caption: $self.model.metadata.status;
+        sizeScale: 0.86;
+        color: [0.45, 0.9, 0.55];
+      });
+    });
+
+    widget(container_x, {
+      height: $ui.height * 0.78;
+      spacing: 1.6em;
+
+      widget(container_y, {
+        weight: 0.85;
+        filterConstraintX: true;
+        spacing: 0.4em;
+
+        widget(container_z, {
+          height: 14.5em;
+          widget(image, {
+            source: $self.model.metadata.poster;
+            aspectConstraint: true;
+          });
+          widget(container_z, {
+            align: topRight;
+            width: 2.5em;
+            height: 1.45em;
+            widget(quad, {
+              color: [0.02, 0.02, 0.04];
+              alpha: 0.88;
+            });
+            widget(label, {
+              caption: $self.model.metadata.ageRating;
+              hidden: !$self.model.metadata.ageRating;
+              sizeScale: 0.75;
+              align: center;
+            });
+          });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 1.45;
+          maxlines: 2;
+        });
+        widget(label, {
+          caption: $self.model.metadata.subtitle;
+          hidden: !$self.model.metadata.subtitle;
+          sizeScale: 0.82;
+          color: 0.7;
+        });
+        widget(label, {
+          caption: $self.model.metadata.year + "  •  " + $self.model.metadata.genres;
+          sizeScale: 0.82;
+          color: 0.72;
+          maxlines: 3;
+        });
+      });
+
+      widget(container_y, {
+        weight: 2.15;
+        filterConstraintX: true;
+        spacing: 0.55em;
+
+        widget(label, {
+          caption: "Смотреть сейчас";
+          sizeScale: 1.5;
+        });
+        widget(label, {
+          caption: $self.model.metadata.description;
+          sizeScale: 0.88;
+          color: 0.78;
+          maxlines: 4;
+        });
+
+        widget(list_x, {
+          height: 10em;
+          spacing: 0.8em;
+          cloner($self.model.nodes, container_z, {
+            width: 13em;
+            height: 9.4em;
+            focusable: 0.6;
+            onEvent(activate, navOpen($self.url));
+
+            widget(quad, {
+              color: [0.12, 0.18, 0.32];
+              alpha: select(isFocused(), 0.3, 0.12);
+            });
+            widget(image, {
+              source: $self.display.preview;
+              aspectConstraint: true;
+              alpha: 0.78;
+            });
+            widget(container_z, {
+              align: bottom;
+              width: 13em;
+              height: 2.35em;
+              widget(quad, {
+                color: [0.02, 0.02, 0.04];
+                alpha: 0.88;
+              });
+              widget(container_y, {
+                padding: [0.22em, 0.35em];
+                widget(label, {
+                  caption: "EP " + $self.display.episode;
+                  sizeScale: 0.88;
+                  bold: true;
+                });
+                widget(label, {
+                  caption: $self.display.title;
+                  sizeScale: 0.68;
+                  color: 0.86;
+                  maxlines: 1;
+                });
+              });
+            });
+          });
+        });
+
+        widget(label, {
+          caption: "← / →  выбрать эпизод    Enter  открыть";
+          sizeScale: 0.75;
+          color: 0.58;
+        });
+      });
+    });
+  });
+});

@@ -9,16 +9,16 @@ function value(value) {
     };
 }
 
-function episode(type, title, url, playcount, restartpos) {
-    return {
-        root: {
-            type: value(type),
-            playcount: value(playcount || 0),
-            restartpos: value(restartpos || 0),
-            metadata: { title: value(title) },
-            url: value(url)
-        }
+function episode(type, title, url, playcount, restartpos, displayTitle) {
+    var root = {
+        type: value(type),
+        playcount: value(playcount || 0),
+        restartpos: value(restartpos || 0),
+        metadata: { title: value(title) },
+        url: value(url)
     };
+    if (displayTitle) root.display = { title: value(displayTitle) };
+    return { root: root };
 }
 
 function test(name, fn) {
@@ -64,6 +64,21 @@ test('finds the last page candidate and the next video', function () {
     next = resume.findNext(items, resume.findLastWatched(items.slice(0, 2)));
     assert.strictEqual(next.title, 'Episode 3');
     assert.strictEqual(next.index, 3);
+});
+
+test('prefers stable AniLibria display title over external metadata', function () {
+    var item = episode(
+        'video',
+        'External TVDB title',
+        'anilibria:episode:1',
+        0,
+        60,
+        'Падший'
+    );
+    var candidate = resume.findLastWatched([item]);
+
+    assert.strictEqual(candidate.title, 'Падший');
+    assert.strictEqual(candidate.historyTitle, 'Падший');
 });
 
 test('decides resume versus next without a history source', function () {

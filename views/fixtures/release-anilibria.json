@@ -1,4 +1,6 @@
 {
+  "loading": false,
+  "error": null,
   "metadata": {
     "title": "Монстрик Карамелька",
     "subtitle": "Otome Kaijuu Carameliser",
@@ -7,12 +9,23 @@
     "status_ongoing": true,
     "ageRating": "16+",
     "genres": "Сейнен, Романтика, Сверхъестественное, Школа",
-    "episodes_total": null,
+    "episodes_total": 12,
     "description": "Страдая от редкой и неизлечимой болезни, вызывающей пугающие изменения в теле, девушка по имени Куро́е Акаи́ши проводит школьные дни, сторонясь одноклассников — особенно первого красавчика класса Ара́ты Мина́ми и его свиты.\nНо когда Ара́та начинает с раздражающей регулярностью заставлять её сердце замирать, Курое обнаруживает, что её недуг таит в себе большой — нет, ОГРОМНЫЙ — секрет: влюблённость буквально превращает её в чудовище!",
     "poster": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
     "poster_landscape": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
-    "rating": null,
-    "resumeCandidate": null,
+    "showOverview": false,
+    "activeTab": "episodes",
+    "hasSecondaryTabs": true,
+    "episodeCount": 6,
+    "franchiseCount": 0,
+    "torrentCount": 0,
+    "torrentGroups": [],
+    "resumeCandidate": {
+      "available": false,
+      "url": "",
+      "title": "",
+      "progress": 0
+    },
     "franchise": {
       "title": "Франшиза",
       "info": null,
@@ -23,67 +36,67 @@
     {
       "type": "video",
       "url": "anilibria:release:10255:1",
-      "episode": 1,
-      "duration": 1457,
-      "metadata": {
+      "display": {
+        "episode": 1,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E01",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 17 сек"
+        "subtitle": "Серия 1",
+        "durationText": "24 мин"
       }
     },
     {
       "type": "video",
       "url": "anilibria:release:10255:2",
-      "episode": 2,
-      "duration": 1457,
-      "metadata": {
+      "display": {
+        "episode": 2,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E02",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 17 сек"
+        "subtitle": "Серия 2",
+        "durationText": "24 мин"
       }
     },
     {
       "type": "video",
       "url": "anilibria:release:10255:3",
-      "episode": 3,
-      "duration": 1457,
-      "metadata": {
+      "display": {
+        "episode": 3,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E03",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 17 сек"
+        "subtitle": "Серия 3",
+        "durationText": "24 мин"
       }
     },
     {
       "type": "video",
       "url": "anilibria:release:10255:4",
-      "episode": 4,
-      "duration": 1457,
-      "metadata": {
+      "display": {
+        "episode": 4,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E04",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 17 сек"
+        "subtitle": "Серия 4",
+        "durationText": "24 мин"
       }
     },
     {
       "type": "video",
       "url": "anilibria:release:10255:5",
-      "episode": 5,
-      "duration": 1458,
-      "metadata": {
+      "display": {
+        "episode": 5,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E05",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 18 сек"
+        "subtitle": "Серия 5",
+        "durationText": "24 мин"
       }
     },
     {
       "type": "video",
       "url": "anilibria:release:10255:6",
-      "episode": 6,
-      "duration": 1457,
-      "metadata": {
+      "display": {
+        "episode": 6,
+        "preview": "https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp",
         "title": "Otome Kaijuu Carameliser S01E06",
-        "icon": "imageset:[{\"url\":\"https://static-libria.weekstorm.one/storage/releases/posters/10255/XOfRg7LGYPC4PNPvmVORaKfKepjFqKlh.webp\",\"width\":400,\"height\":600}]",
-        "description": "Длительность: 24 мин 17 сек"
+        "subtitle": "Серия 6",
+        "durationText": "24 мин"
       }
     }
   ]

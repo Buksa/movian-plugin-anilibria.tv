@@ -1,0 +1,173 @@
+// views/release_landscape.view — Release page for Anilibria
+// Based on pilot-series.view patterns: container_z root, quad bg, two-column split
+#import "../release_components.view"
+
+#define EP_ROW() {
+  widget(container_z, {
+    height: 5.8em;
+    focusable: 0.5;
+
+    widget(quad, {
+      alpha: select(isFocused(), 0.12, 0.04);
+      color: [1, 1, 1];
+    });
+
+    widget(container_x, {
+      spacing: 1em;
+      padding: [0.2em, 0.2em];
+
+      widget(container_z, {
+        width: 9.5em;
+        widget(image, {
+          source: $self.display.preview;
+        });
+        widget(label, {
+          caption: $self.display.episode;
+          size: 2.2em;
+          align: bottomLeft;
+          padding: [0.3em, 0.1em];
+        });
+      });
+
+      widget(container_y, {
+        spacing: 0.25em;
+        align: center;
+        filterConstraintX: true;
+
+        widget(container_x, {
+          widget(label, {
+            caption: $self.display.title;
+            size: 1.35em;
+          });
+          widget(dummy, { });
+          widget(label, {
+            caption: $self.display.durationText;
+            size: 0.95em;
+            color: 0.85;
+            align: right;
+          });
+        });
+
+        widget(container_z, {
+          height: 0.25em;
+          widget(quad, {
+            color: [1, 1, 1];
+            alpha: 0.15;
+          });
+          widget(container_x, {
+            widget(quad, {
+              weight: 0;
+              color: [0.85, 0.9, 0.85];
+              alpha: 0;
+            });
+          });
+        });
+      });
+    });
+
+  });
+}
+
+widget(container_z, {
+
+  // Dark background
+  widget(quad, {
+    color: [0.06, 0.06, 0.1];
+  });
+
+  widget(container_y, {
+    padding: [1em, 0.6em];
+    spacing: 0.6em;
+
+    // ------------------------------------------------------- main split
+    widget(container_x, {
+      spacing: 2em;
+
+      // Left column: poster + info
+      widget(container_y, {
+        weight: 1.0;
+        filterConstraintX: true;
+        spacing: 0.55em;
+
+        widget(container_x, {
+          height: 14em;
+          widget(image, {
+            width: 9.5em;
+            source: $self.model.metadata.poster;
+          });
+          widget(dummy, { });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.year + " • " + $self.model.metadata.status;
+          size: 1.05em;
+          color: 0.85;
+        });
+
+        widget(container_x, {
+          hidden: !$self.model.metadata.rating;
+          spacing: 0.4em;
+          height: 1.4em;
+          widget(label, {
+            caption: "★";
+            size: 1.2em;
+            color: [0.95, 0.85, 0.4];
+          });
+          widget(label, {
+            caption: $self.model.metadata.rating;
+            size: 1.3em;
+          });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.title;
+          size: 2.2em;
+        });
+
+        widget(label, {
+          hidden: !$self.model.metadata.subtitle;
+          caption: $self.model.metadata.subtitle;
+          size: 1.1em;
+          color: 0.75;
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.genres;
+          size: 0.95em;
+          color: 0.8;
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.description;
+          size: 1.0em;
+          maxlines: 10;
+          color: 0.9;
+        });
+
+        // Resume widget
+        RELEASE_RESUME_BUTTON();
+      });
+
+      // Right column: episodes
+      widget(container_y, {
+        weight: 2.6;
+        filterConstraintX: true;
+        spacing: 0.4em;
+
+        widget(label, {
+          caption: "Episodes";
+          size: 1.5em;
+          color: 0.9;
+        });
+
+        widget(list_y, {
+          spacing: 0.5em;
+
+          cloner($self.model.nodes, container_z, {
+            EP_ROW();
+          });
+        });
+      });
+    });
+  });
+});

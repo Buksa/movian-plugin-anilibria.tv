@@ -1,0 +1,87 @@
+// AniLibria release view switcher.
+// The selected production/prototype layout is persisted per release route.
+
+#import "skin://theme.view"
+
+onEvent(menu, { toggle($clone.showSidebar); });
+onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
+
+multiopt($view.stylePath,
+         $clone.settings,
+         "Стиль страницы релиза",
+         $self.persistent.releaseStyle,
+         makeUri("Production", "release_landscape.view"),
+         makeUri("Prototype 01 — Two columns", "prototypes/01-two-column.view"),
+         makeUri("Prototype 02 — Hero backdrop", "prototypes/02-hero-backdrop.view"),
+         makeUri("Prototype 03 — Compact list", "prototypes/03-compact-list.view"),
+         makeUri("Prototype 04 — Card grid", "prototypes/04-card-grid.view"),
+         makeUri("Prototype 05 — Bottom rail", "prototypes/05-cinematic-bottom-rail.view"),
+         makeUri("Prototype 06 — Metadata dashboard", "prototypes/06-metadata-dashboard.view"),
+         makeUri("Prototype 07 — Poster carousel", "prototypes/07-poster-sidebar-carousel.view"),
+         makeUri("Prototype 08 — Queue right poster", "prototypes/08-queue-right-poster.view"),
+         makeUri("Grid", "skin://pages/grid.view"),
+         makeUri("List", "skin://pages/list.view"),
+         makeUri("Tvseason", "skin://pages/tvseason.view")
+);
+
+$view.overlay = select($clone.showSidebar, "sidebar", void);
+style(sidebarBackdrop, { color: 0; alpha: 0.3; });
+
+widget(container_z, {
+  widget(layer, {
+    style: "PageContainer";
+
+    widget(clip, {
+      rightPx: select($clone.showSidebar, 22em, 0);
+      blurOutside: 1;
+      alphaOutside: 0.05;
+
+      widget(container_x, {
+        #import "skin://menu/navbar.view"
+
+        widget(loader, {
+          id: "main";
+          filterConstraintX: true;
+          noInitialTransform: true;
+          time: 0.1;
+          alpha: iir(translate($view.overlay, 1, "sidebar", 0.3, void, 0), 4);
+          onEvent(right, {
+            $clone.showSidebar = true;
+          }, select($clone.showSidebar, false, true));
+          onEvent(left, {
+            $view.showNavbar = true;
+            focus("navbardot");
+          }, select($clone.showSidebar, false, true));
+          source: $view.stylePath;
+        });
+      });
+    });
+
+    widget(loader, {
+      hidden: !$clone.showSidebar;
+      filterConstraintX: true;
+      source: "skin://menu/sidebar.view";
+    });
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.loading;
+    widget(quad, { color: 0; alpha: 0.72; });
+    widget(throbber, {
+      align: center;
+      alpha: iir($self.model.loading, 4);
+    });
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.error;
+    widget(quad, { color: 0; alpha: 0.9; });
+    widget(label, {
+      align: center;
+      caption: $self.model.error;
+      maxlines: 4;
+      sizeScale: 1.05;
+      color: [1.0, 0.55, 0.55];
+    });
+  });
+});

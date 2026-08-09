@@ -1,0 +1,113 @@
+// Prototype 5: Cinematic bottom rail
+// Full-screen artwork with a readable title block and a horizontal episode shelf.
+#import "../release_components.view"
+
+widget(container_z, {
+  widget(image, {
+    source: $self.model.metadata.poster_landscape;
+    width: $ui.width;
+    height: $ui.height;
+    aspectConstraint: true;
+    alpha: 0.38;
+    color: 0.7;
+  });
+
+  widget(quad, {
+    color: [0.025, 0.035, 0.08];
+    alpha: 0.58;
+  });
+
+  widget(container_y, {
+    align: bottom;
+    padding: [1em, 1.3em];
+    spacing: 0.55em;
+
+    widget(label, {
+      caption: $self.model.metadata.title;
+      sizeScale: 2.4;
+      maxlines: 1;
+    });
+
+    widget(container_x, {
+      spacing: 0.7em;
+      widget(label, {
+        caption: $self.model.metadata.subtitle;
+        hidden: !$self.model.metadata.subtitle;
+        sizeScale: 0.95;
+        color: 0.75;
+      });
+      widget(label, {
+        caption: $self.model.metadata.year;
+        sizeScale: 0.9;
+        color: 0.82;
+      });
+      widget(label, {
+        caption: "• " + $self.model.metadata.status;
+        sizeScale: 0.9;
+        color: [0.45, 0.9, 0.55];
+      });
+      widget(label, {
+        caption: "• " + $self.model.metadata.ageRating;
+        hidden: !$self.model.metadata.ageRating;
+        sizeScale: 0.9;
+        color: 0.72;
+      });
+    });
+
+    widget(label, {
+      caption: $self.model.metadata.description;
+      maxlines: 3;
+      sizeScale: 0.9;
+      color: 0.82;
+    });
+
+    widget(label, {
+      caption: "Эпизоды";
+      sizeScale: 1.15;
+      color: 0.95;
+    });
+
+    widget(list_x, {
+      height: 6.4em;
+      spacing: 0.65em;
+      cloner($self.model.nodes, container_z, {
+        width: 10em;
+        height: 6.1em;
+        focusable: 0.5;
+        onEvent(activate, navOpen($self.url));
+
+        widget(quad, {
+          color: [1, 1, 1];
+          alpha: select(isFocused(), 0.18, 0.06);
+        });
+        widget(image, {
+          source: $self.display.preview;
+          aspectConstraint: true;
+          alpha: 0.72;
+        });
+        widget(container_z, {
+          align: bottom;
+          height: 2.2em;
+          widget(quad, {
+            color: [0.02, 0.025, 0.05];
+            alpha: 0.65;
+          });
+          widget(container_y, {
+            padding: [0.18em, 0.3em];
+            widget(label, {
+              caption: "EP " + $self.display.episode;
+              sizeScale: 0.82;
+              bold: true;
+            });
+            widget(label, {
+              caption: $self.display.title;
+              sizeScale: 0.63;
+              color: 0.84;
+              maxlines: 1;
+            });
+          });
+        });
+      });
+    });
+  });
+});

@@ -1,0 +1,123 @@
+// AniLibria catalog view switcher.
+// The selected layout is persisted per catalog route.
+
+#import "skin://theme.view"
+
+onEvent(videoInfo, {
+  $clone.itemData := currentEvent("prop");
+  $clone.itemMenu = "video";
+});
+
+onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(back, { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(cancel, { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(menu, { toggle($clone.showSidebar); }, isVoid($clone.itemMenu));
+onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
+
+multiopt($view.stylePath,
+         $clone.settings,
+         "Стиль каталога",
+         $self.persistent.gridStyle,
+         makeUri("Минимальный", "grid_video_content_minimal.view"),
+         makeUri("Оптимальный", "grid_video_content_optimal.view"),
+         makeUri("Netflix", "grid_video_content_netflix.view"),
+         makeUri("По умолчанию", "skin://pages/grid.view")
+);
+
+$view.overlay = translate($clone.itemMenu,
+                          select($clone.showSidebar, "sidebar", void),
+                          "video", "fullscreen");
+
+style(sidebarBackdrop, { color: 0; alpha: 0.3; });
+
+widget(container_z, {
+  widget(layer, {
+    style: "PageContainer";
+
+    widget(clip, {
+      rightPx: select($clone.showSidebar, 22em, 0);
+      blurOutside: 1;
+      alphaOutside: 0.05;
+
+      widget(container_x, {
+        #import "skin://menu/navbar.view"
+
+        widget(loader, {
+          id: "main";
+          filterConstraintX: true;
+          noInitialTransform: true;
+          time: 0.1;
+          alpha: iir(translate($view.overlay, 1,
+                               "sidebar", 0.3,
+                               "fullscreen", 0), 4);
+          onEvent(right, {
+            $clone.showSidebar = true;
+          }, select($clone.showSidebar, false, true));
+          onEvent(left, {
+            $view.showNavbar = true;
+            focus("navbardot");
+          }, select($clone.showSidebar, false, true));
+          onEvent(up, { void; }, true, true);
+          onEvent(down, { void; }, true, true);
+          source: $view.stylePath;
+        });
+      });
+    });
+
+    widget(loader, {
+      hidden: !$clone.showSidebar;
+      filterConstraintX: true;
+      source: "skin://menu/sidebar.view";
+    });
+
+    widget(loader, {
+      args: $clone.itemData;
+      hidden: isVoid($clone.itemMenu);
+      time: 0;
+      noInitialTransform: true;
+      source: "skin://ctxmenu/" + $clone.itemMenu + "_details.view";
+    });
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.loading;
+    widget(quad, { color: 0; alpha: 0.7; });
+    widget(throbber, {
+      align: center;
+      alpha: iir($self.model.loading, 4);
+    });
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.metadata.error;
+    widget(quad, { color: 0; alpha: 0.88; });
+    widget(label, {
+      align: center;
+      caption: $self.model.metadata.error;
+      maxlines: 3;
+      sizeScale: 1.1;
+      color: [1.0, 0.55, 0.55];
+    });
+  });
+
+  widget(container_y, {
+    alpha: iir($ui.showTopIcons, 4);
+    widget(container_x, {
+      space(1);
+      height: 3em;
+      widget(container_y, {
+        align: center;
+        width: 4em;
+        clickable: true;
+        onEvent(activate, { toggle($clone.showSidebar); });
+        navFocusable: false;
+        widget(icon, {
+          angle: iir($clone.showSidebar, 4) * -90;
+          color: 0.5 + iir(isHovered(), 4);
+          size: 2em;
+          source: "skin://icons/ic_menu_48px.svg";
+        });
+      });
+    });
+  });
+});

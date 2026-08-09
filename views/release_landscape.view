@@ -1,244 +1,200 @@
-// Release detail layout: poster metadata on the left, focusable episodes on the right.
-// The split follows the pilot-series pattern so the first episode rows are visible
-// in the initial viewport instead of being placed below an oversized hero.
-#import "common.view"
+// AniLibria release page: persistent context with tabbed content.
+#import "release_components.view"
 
-$self.model.metadata.background = $self.model.metadata.poster_landscape;
 
 widget(container_z, {
-  // Keep the artwork as atmosphere, not as the content surface.
-  widget(quad, {
-    color: [0.025, 0.035, 0.075];
-    alpha: 0.58;
-  });
+  widget(container_z, {
+    hidden: $self.model.loading || $self.model.error ||
+      $self.model.metadata.showOverview;
 
-  widget(container_y, {
-    padding: [1em, 1.4em];
-    spacing: 0.8em;
-
-    // Page heading.
-    widget(container_x, {
-      height: 3.2em;
-      spacing: 1em;
-
-      widget(container_y, {
-        filterConstraintX: true;
-        widget(label, {
-          caption: $self.model.metadata.title;
-          sizeScale: 2.1;
-          maxlines: 1;
-        });
-        widget(label, {
-          hidden: !$self.model.metadata.subtitle;
-          caption: $self.model.metadata.subtitle;
-          sizeScale: 0.9;
-          color: 0.75;
-          maxlines: 1;
-        });
-      });
-
-      widget(dummy, { });
-
-      widget(container_z, {
-        hidden: !$self.model.metadata.status;
-        width: 7.5em;
-        height: 1.7em;
-        align: center;
-        widget(quad, {
-          color: [0.15, 0.55, 0.38];
-          alpha: 0.8;
-        });
-        widget(label, {
-          caption: $self.model.metadata.status;
-          align: center;
-          sizeScale: 0.85;
-        });
-      });
+    widget(quad, {
+      color: [0.035, 0.045, 0.085];
     });
 
-    // Main content: compact metadata column + navigable episode list.
-    widget(container_x, {
-      height: $ui.height * 0.82;
-      spacing: 1.4em;
+    widget(container_y, {
+      padding: [0.9em, 1.2em];
+      spacing: 0.65em;
 
-      // Poster and release metadata.
-      widget(container_y, {
-        weight: 1;
-        filterConstraintX: true;
-        spacing: 0.45em;
-
-        widget(container_z, {
-          width: 10.5em;
-          height: 13.5em;
-          widget(throbber, {
-            alpha: 1.0;
-            hidden: !$clone.isLoading;
+      widget(container_x, {
+        height: 3.1em;
+        spacing: 0.8em;
+        widget(container_y, {
+          filterConstraintX: true;
+          widget(label, {
+            caption: $self.model.metadata.title;
+            sizeScale: 2.0;
+            maxlines: 1;
           });
-          widget(image, {
-            $clone.isLoading = isLoading();
-            source: $self.model.metadata.poster;
-            aspectConstraint: true;
-          });
-          widget(border, {
-            border: 0.1em;
-            color: 1;
-            alpha: 0.7;
+          widget(label, {
+            caption: $self.model.metadata.subtitle;
+            hidden: !$self.model.metadata.subtitle;
+            sizeScale: 0.82;
+            color: 0.65;
           });
         });
+        widget(dummy, { });
+        RELEASE_STATUS_BADGE();
+      });
 
-        widget(label, {
-          caption: $self.model.metadata.title;
-          sizeScale: 1.2;
-          maxlines: 2;
-        });
+      widget(container_x, {
+        height: $ui.height * 0.78;
+        spacing: 1.35em;
 
-        widget(container_x, {
-          spacing: 0.7em;
+        // Persistent release context.
+        widget(container_y, {
+          weight: 0.9;
+          filterConstraintX: true;
+          spacing: 0.42em;
+
+          RELEASE_POSTER_CARD();
+
           widget(label, {
             caption: $self.model.metadata.year;
             sizeScale: 0.95;
             color: 0.85;
           });
           widget(label, {
-            hidden: !$self.model.metadata.ageRating;
-            caption: "• " + $self.model.metadata.ageRating;
-            sizeScale: 0.95;
-            color: 0.85;
-          });
-        });
-
-        LABEL("Жанры:", $self.model.metadata.genres);
-
-        widget(label, {
-          hidden: !$self.model.metadata.description;
-          caption: $self.model.metadata.description;
-          RichTextItem();
-          maxlines: 7;
-          sizeScale: 0.92;
-          color: 0.9;
-        });
-
-        widget(dummy, { });
-
-        widget(container_z, {
-          hidden: !$self.model.metadata.resumeCandidate;
-          height: 3.2em;
-          widget(quad, {
-            color: [0.18, 0.32, 0.65];
-            alpha: 0.85;
-          });
-          widget(label, {
-            caption: "Продолжить: " +
-              $self.model.metadata.resumeCandidate.title + "  " +
-              $self.model.metadata.resumeCandidate.progress + "%";
-            padding: [0.4em, 0.6em];
-            maxlines: 1;
-          });
-        });
-      });
-
-      // Episodes stay in a list_y so focus navigation can reveal all rows.
-      widget(container_y, {
-        weight: 2.4;
-        filterConstraintX: true;
-        spacing: 0.45em;
-
-        widget(container_x, {
-          height: 2.2em;
-          spacing: 0.7em;
-          widget(label, {
-            caption: "ЭПИЗОДЫ";
-            sizeScale: 1.35;
-          });
-          widget(label, {
-            hidden: !$self.model.metadata.episodes_total;
-            caption: $self.model.metadata.episodes_total;
-            sizeScale: 0.9;
-            color: 0.8;
-          });
-          widget(dummy, { });
-          widget(label, {
-            hidden: !$self.model.metadata.genres;
             caption: $self.model.metadata.genres;
-            sizeScale: 0.75;
-            color: 0.65;
-            autohide: true;
+            sizeScale: 0.8;
+            color: 0.68;
+            maxlines: 2;
           });
+          widget(label, {
+            caption: $self.model.metadata.description;
+            sizeScale: 0.8;
+            color: 0.78;
+            maxlines: 8;
+          });
+          RELEASE_OVERVIEW_BUTTON();
+
+          RELEASE_RESUME_BUTTON();
         });
 
-        widget(container_x, {
-          height: $ui.height * 0.68;
+        // Active content panel.
+        widget(container_y, {
+          weight: 2.1;
+          filterConstraintX: true;
+          spacing: 0.45em;
 
-          widget(list_y, {
-            .id = "episodes";
+          widget(container_x, {
+            hidden: !$self.model.metadata.hasSecondaryTabs;
+            height: 2.4em;
             spacing: 0.45em;
-            cloner($self.model.nodes, container_z, {
-              height: 4.7em;
-              focusable: 0.5;
-              onEvent(activate, navOpen($self.url));
+            RELEASE_TAB_BUTTON("episodes", "СЕРИИ",
+              $self.model.metadata.episodeCount, true);
+            RELEASE_TAB_BUTTON("franchise", "ФРАНШИЗА",
+              $self.model.metadata.franchiseCount,
+              $self.model.metadata.franchiseCount > 0);
+            RELEASE_TAB_BUTTON("torrents", "ТОРРЕНТЫ",
+              $self.model.metadata.torrentCount,
+              $self.model.metadata.torrentCount > 0);
+            widget(dummy, { });
+          });
 
-              widget(quad, {
-                color: [1, 1, 1];
-                alpha: select(isNavFocused(), 0.14, 0.035);
-              });
+          widget(container_z, {
+            weight: 1;
 
+            // Episodes.
+            widget(container_y, {
+              hidden: $self.model.metadata.activeTab != "episodes";
+              spacing: 0.3em;
               widget(container_x, {
-                spacing: 0.8em;
-                padding: [0.2em, 0.35em];
-
-                widget(container_z, {
-                  width: 3.3em;
-                  widget(image, {
-                    source: $self.metadata.icon;
-                    aspectConstraint: true;
-                    color: 0.85 +
-                      iir(isNavFocused() + isHovered() + isPressed(), 4) * 0.15;
-                  });
-                  widget(label, {
-                    hidden: !$self.episode;
-                    caption: "EP " + $self.episode;
-                    sizeScale: 0.9;
-                    padding: [0.15em, 0.25em];
-                    align: bottomLeft;
-                    bgalpha: 0.8;
-                  });
+                height: 1.7em;
+                widget(label, {
+                  caption: "Серии";
+                  sizeScale: 1.2;
                 });
-
-                widget(container_y, {
-                  filterConstraintX: true;
+                widget(dummy, { });
+                widget(label, {
+                  caption: $self.model.metadata.episodeCount;
+                  sizeScale: 0.76;
+                  color: 0.58;
+                });
+              });
+              widget(container_z, {
+                hidden: $self.model.metadata.episodeCount > 0;
+                widget(label, {
+                  caption: "Серии пока не опубликованы";
                   align: center;
-                  spacing: 0.2em;
-
-                  widget(container_x, {
-                    spacing: 0.5em;
-                    widget(label, {
-                      caption: $self.metadata.title;
-                      sizeScale: 1.05;
-                      maxlines: 1;
-                    });
-                    widget(dummy, { });
-                    widget(label, {
-                      hidden: !$self.metadata.description;
-                      caption: $self.metadata.description;
-                      sizeScale: 0.78;
-                      color: 0.8;
-                      align: right;
-                    });
-                  });
-
-                  widget(border, {
-                    border: 0.1em;
-                    color: 1;
-                    alpha: iir(isNavFocused() + isHovered() + isPressed(), 4);
+                  sizeScale: 1.0;
+                  color: 0.62;
+                });
+              });
+              widget(container_x, {
+                hidden: !($self.model.metadata.episodeCount > 0);
+                widget(list_y, {
+                  .id = "release-episodes";
+                  spacing: 0.28em;
+                  chaseFocus: true;
+                  cloner($self.model.nodes, container_z, {
+                    RELEASE_EPISODE_ROW();
                   });
                 });
+                LIST_Y_SLIDER("release-episodes", true);
+              });
+            });
+
+            // Franchise releases.
+            widget(container_y, {
+              hidden: $self.model.metadata.activeTab != "franchise";
+              spacing: 0.45em;
+              widget(label, {
+                caption: $self.model.metadata.franchise.title;
+                sizeScale: 1.15;
+                maxlines: 1;
+              });
+              widget(label, {
+                hidden: !$self.model.metadata.franchise.info;
+                caption: $self.model.metadata.franchise.info;
+                sizeScale: 0.76;
+                color: 0.62;
+                maxlines: 1;
+              });
+              widget(list_x, {
+                spacing: 0.65em;
+                cloner($self.model.metadata.franchise.releases,
+                  container_z, {
+                    RELEASE_FRANCHISE_CARD();
+                  });
+              });
+            });
+
+            // Torrent groups.
+            widget(container_y, {
+              hidden: $self.model.metadata.activeTab != "torrents";
+              spacing: 0.35em;
+              widget(label, {
+                caption: "Торренты";
+                sizeScale: 1.2;
+              });
+              widget(container_x, {
+                widget(list_y, {
+                  .id = "release-torrents";
+                  spacing: 0.5em;
+                  chaseFocus: true;
+                  cloner($self.model.metadata.torrentGroups,
+                    container_y, {
+                      spacing: 0.25em;
+                      widget(label, {
+                        caption: $self.quality;
+                        height: 1.5em;
+                        sizeScale: 0.9;
+                        color: [0.5, 0.72, 1.0];
+                      });
+                      cloner($self.items, container_z, {
+                        RELEASE_TORRENT_ROW();
+                      });
+                    });
+                });
+                LIST_Y_SLIDER("release-torrents", true);
               });
             });
           });
-
-          LIST_Y_SLIDER("episodes", true);
         });
       });
     });
   });
+
+  RELEASE_LOADING_AND_ERROR();
+  RELEASE_OVERVIEW_OVERLAY();
 });

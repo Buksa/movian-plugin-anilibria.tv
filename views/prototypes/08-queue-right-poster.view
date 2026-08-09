@@ -1,0 +1,142 @@
+// Prototype 8: Reversed queue
+// Episode queue is the primary surface; the release poster and metadata stay on the right.
+#import "../release_components.view"
+
+widget(container_z, {
+  widget(quad, {
+    color: [0.025, 0.03, 0.055];
+  });
+
+  widget(container_y, {
+    padding: [1em, 1.2em];
+    spacing: 0.65em;
+
+    widget(container_x, {
+      height: 3em;
+      spacing: 0.8em;
+      widget(container_y, {
+        filterConstraintX: true;
+        widget(label, {
+          caption: "ЭПИЗОДЫ";
+          sizeScale: 1.65;
+          maxlines: 1;
+        });
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 0.78;
+          color: 0.65;
+        });
+      });
+      widget(dummy, { });
+      widget(label, {
+        caption: $self.model.metadata.year + "  •  " + $self.model.metadata.status;
+        sizeScale: 0.9;
+        color: 0.78;
+      });
+    });
+
+    widget(container_x, {
+      height: $ui.height * 0.79;
+      spacing: 1.3em;
+
+      // Primary surface: a wide queue with large episode numbers.
+      widget(container_y, {
+        weight: 1.8;
+        filterConstraintX: true;
+        spacing: 0.35em;
+
+        widget(label, {
+          caption: "Очередь просмотра";
+          sizeScale: 1.2;
+          color: 0.88;
+        });
+
+        widget(list_y, {
+          spacing: 0.35em;
+          cloner($self.model.nodes, container_z, {
+            height: 5.15em;
+            focusable: 0.45;
+            onEvent(activate, navOpen($self.url));
+
+            widget(quad, {
+              color: [0.1, 0.14, 0.25];
+              alpha: select(isFocused(), 0.42, 0.14);
+            });
+
+            widget(container_x, {
+              spacing: 0.75em;
+              padding: [0.25em, 0.35em];
+
+              widget(label, {
+                caption: $self.display.episode;
+                width: 2.5em;
+                align: center;
+                sizeScale: 1.65;
+                color: [0.5, 0.75, 1.0];
+              });
+
+              widget(container_z, {
+                width: 5.4em;
+                widget(image, {
+                  source: $self.display.preview;
+                  aspectConstraint: true;
+                });
+              });
+
+              widget(container_y, {
+                filterConstraintX: true;
+                align: center;
+                spacing: 0.2em;
+                widget(label, {
+                  caption: $self.display.title;
+                  sizeScale: 1.0;
+                  maxlines: 1;
+                });
+                widget(label, {
+                  caption: $self.display.durationText;
+                  hidden: !$self.display.durationText;
+                  sizeScale: 0.78;
+                  color: 0.7;
+                });
+              });
+
+            });
+          });
+        });
+      });
+
+      // Secondary surface: release context.
+      widget(container_y, {
+        weight: 0.9;
+        filterConstraintX: true;
+        spacing: 0.45em;
+
+        widget(container_z, {
+          height: 15em;
+          widget(image, {
+            source: $self.model.metadata.poster;
+            aspectConstraint: true;
+          });
+          widget(border, {
+            border: 0.1em;
+            color: [0.45, 0.65, 1.0];
+            alpha: 0.8;
+          });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.genres;
+          sizeScale: 0.82;
+          color: 0.7;
+          maxlines: 3;
+        });
+        widget(label, {
+          caption: $self.model.metadata.description;
+          sizeScale: 0.82;
+          color: 0.78;
+          maxlines: 8;
+        });
+      });
+    });
+  });
+});

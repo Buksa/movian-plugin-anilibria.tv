@@ -1,3 +1,3 @@
 widget(loader, {
-  source: "release_landscape.view";
+  source: "release_view_switcher.view";
 });

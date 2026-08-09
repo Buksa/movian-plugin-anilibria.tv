@@ -1,0 +1,472 @@
+// Shared release-page behaviour and repeated visual elements.
+// All data-bound macros consume the release model contract directly.
+#import "common.view"
+
+
+#define RELEASE_STATUS_BADGE() {
+  widget(container_z, {
+    hidden: !$self.model.metadata.status;
+    width: 7em;
+    height: 1.65em;
+    widget(quad, {
+      color: select($self.model.metadata.status_ongoing,
+        [0.16, 0.55, 0.34], [0.22, 0.35, 0.62]);
+      alpha: 0.9;
+    });
+    widget(label, {
+      caption: $self.model.metadata.status;
+      align: center;
+      sizeScale: 0.8;
+    });
+  });
+}
+
+#define RELEASE_RESUME_BUTTON() {
+  widget(container_z, {
+    hidden: !$self.model.metadata.resumeCandidate.available;
+    height: 2.6em;
+    focusable: 0.65;
+    onEvent(activate,
+      navOpen($self.model.metadata.resumeCandidate.url));
+    widget(quad, {
+      color: [0.18, 0.38, 0.7];
+      alpha: select(isFocused(), 0.65, 0.32);
+    });
+    widget(label, {
+      caption: "Продолжить: " +
+        $self.model.metadata.resumeCandidate.title +
+        select($self.model.metadata.resumeCandidate.progress > 0,
+          " · " + $self.model.metadata.resumeCandidate.progress + "%", "");
+      padding: [0.25em, 0.4em];
+      sizeScale: 0.76;
+      maxlines: 1;
+    });
+  });
+}
+
+#define RELEASE_TAB_BUTTON(ID, CAPTION, COUNT, AVAILABLE) {
+  widget(container_z, {
+    hidden: !AVAILABLE;
+    id: "release-tab-" + ID;
+    width: 9em;
+    height: 2.4em;
+    focusable: 0.45;
+    onEvent(activate, {
+      $self.model.metadata.activeTab = ID;
+    });
+
+    widget(quad, {
+      color: [0.16, 0.28, 0.52];
+      alpha: select(isFocused(), 0.72,
+        select($self.model.metadata.activeTab == ID, 0.42, 0.08));
+    });
+    widget(container_x, {
+      padding: [0.25em, 0.45em];
+      spacing: 0.35em;
+      widget(label, {
+        caption: CAPTION;
+        sizeScale: 0.82;
+        color: select($self.model.metadata.activeTab == ID,
+          [0.72, 0.86, 1.0], 0.78);
+      });
+      widget(dummy, { });
+      widget(container_z, {
+        hidden: !(COUNT > 0);
+        width: 1.5em;
+        height: 1.3em;
+        widget(quad, {
+          color: [0.35, 0.58, 0.95];
+          alpha: 0.65;
+        });
+        widget(label, {
+          caption: COUNT;
+          align: center;
+          sizeScale: 0.72;
+        });
+      });
+    });
+  });
+}
+
+#define RELEASE_POSTER_CARD() {
+  // Display-only poster card. Navigation belongs to content rows.
+  widget(container_z, {
+    width: 8.1em;
+    widget(container_z, {
+      height: 12.2em;
+      widget(image, {
+        source: $self.model.metadata.poster;
+        aspectConstraint: true;
+      });
+      widget(container_y, {
+        hidden: !$self.model.metadata.ageRating;
+        align: top;
+        widget(container_x, {
+          padding: [3.1em, 0, 0, 0];
+          align: left;
+          widget(container_z, {
+            widget(quad, {
+              color: [0.025, 0.03, 0.06];
+              alpha: 0.7;
+            });
+            widget(label, {
+              padding: [0.3em, 0.1em];
+              caption: $self.model.metadata.ageRating;
+              sizeScale: 0.72;
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+#define RELEASE_EPISODE_ROW() {
+  height: 4.7em;
+  id: select($self.display.episode == 1,
+    "release-first-episode", void);
+  focusable: 1.0;
+  onEvent(activate, navOpen($self.url));
+  onEvent(up, {
+    focus("release-tab-episodes");
+  }, $self.display.episode == 1);
+
+  widget(quad, {
+    color: [0.16, 0.23, 0.4];
+    alpha: select(isFocused(), 0.34, 0.1);
+  });
+
+  widget(container_x, {
+    padding: [0.2em, 0.35em];
+    spacing: 0.75em;
+
+    widget(container_z, {
+      width: 7em;
+      widget(image, {
+        source: $self.display.preview;
+        alpha: 1.0;
+      });
+      widget(container_y, {
+        align: bottom;
+        widget(container_x, {
+          align: left;
+          widget(container_z, {
+            widget(quad, {
+              color: 0;
+              alpha: 0.7;
+            });
+            widget(label, {
+              padding: [0.3em, 0.1em];
+              caption: $self.display.episode;
+              sizeScale: 0.8;
+            });
+          });
+        });
+      });
+    });
+
+    widget(container_y, {
+      filterConstraintX: true;
+      align: center;
+      spacing: 0.22em;
+      widget(label, {
+        caption: $self.display.title;
+        sizeScale: 1.02;
+        maxlines: 1;
+      });
+      widget(container_x, {
+        spacing: 0.45em;
+        widget(label, {
+          caption: $self.display.subtitle;
+          sizeScale: 0.76;
+          color: 0.68;
+        });
+        widget(label, {
+          hidden: !$self.display.durationText;
+          caption: "•  " + $self.display.durationText;
+          sizeScale: 0.76;
+          color: 0.68;
+        });
+      });
+    });
+  });
+}
+
+#define RELEASE_FRANCHISE_CARD() {
+  width: 11.5em;
+  height: 15.5em;
+  focusable: select($self.active, 0.0, 0.75);
+  onEvent(activate, navOpen($self.url), !$self.active);
+
+  widget(quad, {
+    color: [0.14, 0.2, 0.34];
+    alpha: select($self.active, 0.18, select(isFocused(), 0.4, 0.12));
+  });
+  widget(container_y, {
+    padding: 0.35em;
+    spacing: 0.3em;
+    widget(container_z, {
+      height: 11em;
+      widget(image, {
+        source: $self.metadata.icon;
+        aspectConstraint: true;
+        alpha: select($self.active, 0.62, 0.92);
+      });
+    });
+    widget(label, {
+      hidden: !$self.active;
+      caption: "Сейчас";
+      height: 1em;
+      sizeScale: 0.68;
+      color: [0.42, 0.9, 0.55];
+    });
+    widget(label, {
+      caption: $self.metadata.title;
+      sizeScale: 0.8;
+      maxlines: 2;
+      color: select($self.active, 0.68, 0.95);
+    });
+    widget(label, {
+      caption: $self.metadata.description;
+      sizeScale: 0.66;
+      maxlines: 2;
+      color: 0.62;
+    });
+  });
+}
+
+#define RELEASE_TECH_BADGE(CAPTION, HIDDEN, COLOR) {
+  widget(container_z, {
+    hidden: HIDDEN;
+    height: 1.35em;
+    width: 4.7em;
+    widget(quad, {
+      color: COLOR;
+      alpha: 0.65;
+    });
+    widget(label, {
+      caption: CAPTION;
+      align: center;
+      sizeScale: 0.65;
+      maxlines: 1;
+    });
+  });
+}
+
+#define RELEASE_TORRENT_ROW() {
+  height: 4.6em;
+  focusable: 0.75;
+  onEvent(activate, navOpen($self.url));
+
+  widget(quad, {
+    color: select($self.noSeeders,
+      [0.45, 0.22, 0.08], [0.13, 0.2, 0.34]);
+    alpha: select(isFocused(), 0.42, 0.14);
+  });
+  widget(container_y, {
+    padding: [0.25em, 0.4em];
+    spacing: 0.25em;
+
+    widget(container_x, {
+      spacing: 0.35em;
+      RELEASE_TECH_BADGE($self.quality, !$self.quality, [0.2, 0.42, 0.75]);
+      RELEASE_TECH_BADGE($self.codec, !$self.codec, [0.32, 0.38, 0.56]);
+      RELEASE_TECH_BADGE($self.bitDepth, !$self.bitDepth, [0.36, 0.3, 0.55]);
+      RELEASE_TECH_BADGE($self.hardsubText, !$self.hardsubText, [0.5, 0.28, 0.2]);
+      RELEASE_TECH_BADGE($self.bitrateText, !$self.bitrateText, [0.25, 0.42, 0.45]);
+      widget(dummy, { });
+      widget(container_x, {
+        width: 13em;
+        filterConstraintX: true;
+        spacing: 0.35em;
+        widget(label, {
+          caption: $self.sizeText;
+          width: 5em;
+          sizeScale: 0.74;
+          color: 0.9;
+          align: right;
+        });
+        widget(label, {
+          caption: $self.seedersText;
+          width: 3.5em;
+          sizeScale: 0.74;
+          color: select($self.noSeeders,
+            [1.0, 0.64, 0.25], [0.42, 0.9, 0.5]);
+          align: right;
+        });
+        widget(label, {
+          caption: $self.leechersText;
+          width: 3.5em;
+          sizeScale: 0.74;
+          color: [0.95, 0.58, 0.45];
+          align: right;
+        });
+      });
+    });
+
+    widget(label, {
+      caption: select($self.noSeeders,
+        "Нет раздающих  •  " + $self.shortLabel, $self.shortLabel);
+      sizeScale: 0.72;
+      color: select($self.noSeeders, [1.0, 0.68, 0.3], 0.7);
+      maxlines: 1;
+    });
+  });
+}
+
+#define RELEASE_OVERVIEW_BUTTON() {
+  widget(container_z, {
+    hidden: !$self.model.metadata.description;
+    id: "release-overview-button";
+    height: 2.2em;
+    focusable: 0.6;
+    onEvent(activate, {
+      $self.model.metadata.showOverview = true;
+    });
+    widget(quad, {
+      color: [0.15, 0.3, 0.55];
+      alpha: select(isFocused(), 0.52, 0.24);
+    });
+    widget(label, {
+      caption: "Подробнее";
+      align: center;
+      sizeScale: 0.82;
+    });
+  });
+}
+
+#define RELEASE_OVERVIEW_OVERLAY() {
+  onEvent(back, {
+    $self.model.metadata.showOverview = false;
+    focus("release-overview-button");
+  }, $self.model.metadata.showOverview);
+
+  widget(container_z, {
+    hidden: !$self.model.metadata.showOverview;
+
+    widget(quad, {
+      color: [0.015, 0.02, 0.045];
+      alpha: 0.98;
+    });
+    widget(container_y, {
+      padding: [3.6em, 5.5em];
+      spacing: 0.6em;
+
+      widget(container_x, {
+        height: 2.5em;
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 1.55;
+          maxlines: 1;
+        });
+        widget(dummy, { });
+        widget(label, {
+          caption: "Back — закрыть";
+          sizeScale: 0.72;
+          color: 0.58;
+        });
+      });
+
+      widget(container_x, {
+        weight: 1;
+        widget(list_y, {
+          .id = "release-overview";
+          widget(label, {
+            RichTextItem();
+            caption: $self.model.metadata.description;
+            maxlines: 80;
+            sizeScale: 1.0;
+            color: 0.9;
+          });
+        });
+        widget(slider_y, {
+          bind("release-overview");
+          width: 24;
+          focusable: 1.0 * canScroll();
+          navFocusable: true;
+          alpha: iir(canScroll(), 16);
+          widget(quad, {
+            alpha: 0.7 + isHovered();
+          });
+        });
+      });
+
+      widget(container_x, {
+        height: 2.2em;
+        widget(dummy, { });
+        widget(container_z, {
+          width: 8em;
+          focusable: 0.5;
+          onEvent(activate, {
+            $self.model.metadata.showOverview = false;
+            focus("release-overview-button");
+          });
+          widget(quad, {
+            color: [0.2, 0.4, 0.7];
+            alpha: select(isFocused(), 0.65, 0.3);
+          });
+          widget(label, {
+            caption: "Закрыть";
+            align: center;
+            sizeScale: 0.82;
+          });
+        });
+      });
+    });
+  });
+}
+
+#define RELEASE_LOADING_AND_ERROR() {
+  widget(container_z, {
+    hidden: !$self.model.loading;
+    widget(quad, {
+      color: [0.02, 0.025, 0.055];
+    });
+    widget(container_y, {
+      align: center;
+      spacing: 0.8em;
+      widget(throbber, {
+        width: 3em;
+        height: 3em;
+      });
+      widget(label, {
+        caption: $self.model.metadata.title;
+        align: center;
+        sizeScale: 1.15;
+      });
+    });
+  });
+
+  widget(container_z, {
+    hidden: !$self.model.error;
+    widget(quad, {
+      color: [0.04, 0.025, 0.04];
+    });
+    widget(container_y, {
+      align: center;
+      spacing: 0.8em;
+      widget(label, {
+        caption: $self.model.error;
+        align: center;
+        maxlines: 4;
+        sizeScale: 1.1;
+        color: [1.0, 0.62, 0.62];
+      });
+      widget(container_z, {
+        width: 9em;
+        height: 2.4em;
+        focusable: 1.0;
+        onEvent(activate, navOpen($self.model.metadata.retryUrl));
+        widget(quad, {
+          color: [0.25, 0.42, 0.72];
+          alpha: select(isFocused(), 0.7, 0.38);
+        });
+        widget(label, {
+          caption: "Повторить";
+          align: center;
+          sizeScale: 0.9;
+        });
+      });
+    });
+  });
+}

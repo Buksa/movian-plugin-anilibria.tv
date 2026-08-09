@@ -1,0 +1,152 @@
+// Prototype 4: Card grid — episode cards with progress, grid layout
+// Plex/Infuse style: poster left, grid of episode cards right
+#import "../release_components.view"
+
+#define EP_TILE() {
+  widget(container_z, {
+    width: 10em;
+    height: 11em;
+    focusable: 0.5;
+
+    widget(quad, {
+      alpha: select(isFocused(), 0.18, 0.05);
+      color: [1, 1, 1];
+    });
+
+    widget(container_y, {
+      spacing: 0;
+
+      widget(container_z, {
+        height: 6.5em;
+        widget(image, {
+          source: $self.display.preview;
+        });
+        widget(container_y, {
+          align: topRight;
+          padding: [0.2em, 0.3em];
+          widget(container_z, {
+            width: 2.8em;
+            height: 1.6em;
+            widget(quad, {
+              color: [0.06, 0.06, 0.1];
+              alpha: 0.85;
+            });
+            widget(label, {
+              caption: $self.display.episode;
+              size: 1.2em;
+              align: center;
+              padding: [0.15em, 0.3em];
+            });
+          });
+        });
+      });
+
+      widget(container_y, {
+        padding: [0.3em, 0.4em];
+        spacing: 0.15em;
+
+        widget(label, {
+          caption: $self.display.title;
+          size: 0.9em;
+          maxlines: 1;
+          ellipsize: true;
+        });
+
+        widget(label, {
+          caption: $self.display.durationText;
+          size: 0.75em;
+          color: 0.7;
+        });
+      });
+    });
+
+  });
+}
+
+widget(container_z, {
+
+  widget(quad, {
+    color: [0.05, 0.05, 0.08];
+  });
+
+  widget(container_x, {
+    padding: [0.8em, 1em];
+    spacing: 1.5em;
+
+    // Left: poster + info
+    widget(container_y, {
+      weight: 1.0;
+      filterConstraintX: true;
+      spacing: 0.5em;
+
+      widget(image, {
+        width: 12em;
+        source: $self.model.metadata.poster;
+      });
+
+      widget(label, {
+        caption: $self.model.metadata.title;
+        size: 1.8em;
+        bold: true;
+      });
+
+      widget(label, {
+        hidden: !$self.model.metadata.subtitle;
+        caption: $self.model.metadata.subtitle;
+        size: 1.0em;
+        color: 0.7;
+      });
+
+      widget(container_x, {
+        spacing: 0.6em;
+        widget(label, {
+          caption: $self.model.metadata.year;
+          size: 0.9em;
+          color: 0.8;
+        });
+        widget(label, {
+          caption: $self.model.metadata.status;
+          size: 0.9em;
+          color: [0.4, 0.85, 0.4];
+        });
+      });
+
+      widget(label, {
+        caption: $self.model.metadata.genres;
+        size: 0.85em;
+        color: 0.65;
+      });
+
+      RELEASE_RESUME_BUTTON();
+
+      widget(label, {
+        caption: $self.model.metadata.description;
+        size: 0.85em;
+        maxlines: 6;
+        color: 0.8;
+      });
+    });
+
+    // Right: episode grid
+    widget(container_y, {
+      weight: 2.0;
+      filterConstraintX: true;
+      spacing: 0.4em;
+
+      widget(label, {
+        caption: "Episodes";
+        size: 1.4em;
+        color: 0.9;
+      });
+
+      widget(list_x, {
+        height: 12em;
+        spacing: 0.8em;
+
+        cloner($self.model.nodes, container_z, {
+          EP_TILE();
+        });
+      });
+    });
+  });
+});

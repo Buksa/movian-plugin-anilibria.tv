@@ -1,0 +1,122 @@
+// Focused 3D card grid for the AniLibria catalog.
+
+#import "skin://theme.view"
+
+widget(container_z, {
+  widget(array, {
+    id: "scrollable";
+    margin: [1em, 0, 1em, 0];
+    childTilesX: select($ui.aspect > 1.2, 5, 2);
+    childTilesY: 4;
+    Xspacing: 0.8em;
+    Yspacing: 0.7em;
+    chaseFocus: true;
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 4em;
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+
+    cloner($self.model.nodes, displacement, {
+      focusable: 1;
+      padding: [0.25em, 0, 0.25em, 0];
+      scaling: [
+        0.88 + iir(isNavFocused() + isHovered(), 4) * 0.12,
+        0.88 + iir(isNavFocused() + isHovered(), 4) * 0.12,
+        1.0
+      ];
+      rotation: [
+        iir(
+          select(isNavFocused() + isHovered() > 0.5, 0,
+            10 * select(cloneIndex() % 2 == 0, -1, 1)),
+          10
+        ),
+        0, 1, 0
+      ];
+      translation: [
+        0,
+        iir(isNavFocused() + isHovered(), 12) * -0.05,
+        iir(isNavFocused() + isHovered(), 12) * 0.08
+      ];
+      onEvent(activate, navOpen($self.url));
+      onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+      widget(container_y, {
+        spacing: 0.25em;
+        widget(container_z, {
+          height: 13em;
+          widget(image, {
+            source: $self.metadata.icon ?? "skin://graphics/logo.svg";
+            aspectConstraint: true;
+            color: 0.72 + iir(isNavFocused() + isHovered(), 4) * 0.28;
+          });
+          widget(quad, {
+            color: 0;
+            alpha: iir(isNavFocused(), 8) * 0.28;
+          });
+          widget(container_z, {
+            hidden: !isNavFocused();
+            widget(image, {
+              align: center;
+              source: "skin://icons/ic_play_circle_outline_48px.svg";
+              height: 3em;
+              shadow: 2;
+            });
+          });
+          widget(container_y, {
+            hidden: isVoid($self.metadata.rating);
+            align: topRight;
+            padding: 0.3em;
+            widget(container_z, {
+              width: 3em;
+              height: 1.3em;
+              widget(quad, {
+                color: [0.2, 0.55, 0.95];
+                alpha: 0.8;
+              });
+              widget(label, {
+                caption: $self.metadata.rating;
+                align: center;
+                sizeScale: 0.65;
+              });
+            });
+          });
+        });
+        widget(label, {
+          caption: $self.metadata.title;
+          maxlines: 2;
+          ellipsize: true;
+          align: center;
+          sizeScale: 0.84;
+          shadow: 1;
+          color: 0.72 + iir(isNavFocused() + isHovered(), 4) * 0.28;
+        });
+        widget(label, {
+          hidden: isVoid($self.metadata.year);
+          caption: $self.metadata.year;
+          align: center;
+          sizeScale: 0.65;
+          color: 0.52;
+        });
+      });
+    });
+  });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+  widget(container_y, {
+    align: top;
+    widget(container_z, {
+      height: 3em;
+      zoffset: 10;
+      widget(quad, { color: 0; alpha: 0.55; });
+      widget(label, {
+        caption: $self.model.metadata.title;
+        align: center;
+        sizeScale: 1.3;
+        shadow: 1;
+      });
+    });
+  });
+});

@@ -1,0 +1,153 @@
+// Prototype 6: Metadata dashboard
+// A quiet, text-first layout with a dense, keyboard-friendly episode table.
+#import "../release_components.view"
+
+widget(container_z, {
+  widget(quad, {
+    color: [0.045, 0.055, 0.095];
+  });
+
+  widget(container_y, {
+    padding: [0.9em, 1.2em];
+    spacing: 0.65em;
+
+    widget(container_x, {
+      height: 3.1em;
+      spacing: 0.8em;
+      widget(container_y, {
+        filterConstraintX: true;
+        widget(label, {
+          caption: $self.model.metadata.title;
+          sizeScale: 2.0;
+          maxlines: 1;
+        });
+        widget(label, {
+          caption: $self.model.metadata.subtitle;
+          hidden: !$self.model.metadata.subtitle;
+          sizeScale: 0.82;
+          color: 0.65;
+        });
+      });
+      widget(dummy, { });
+      widget(container_z, {
+        width: 8em;
+        height: 1.8em;
+        widget(quad, {
+          color: [0.12, 0.42, 0.32];
+          alpha: 0.9;
+        });
+        widget(label, {
+          caption: $self.model.metadata.status;
+          align: center;
+          sizeScale: 0.82;
+        });
+      });
+    });
+
+    widget(container_x, {
+      height: $ui.height * 0.78;
+      spacing: 1.4em;
+
+      widget(container_y, {
+        weight: 0.9;
+        filterConstraintX: true;
+        spacing: 0.45em;
+
+        widget(container_z, {
+          height: 12.5em;
+          widget(image, {
+            source: $self.model.metadata.poster;
+            aspectConstraint: true;
+          });
+          widget(border, {
+            border: 0.1em;
+            color: [0.4, 0.65, 1.0];
+            alpha: 0.75;
+          });
+        });
+
+        widget(label, {
+          caption: $self.model.metadata.year + "  •  " + $self.model.metadata.ageRating;
+          sizeScale: 1.0;
+          color: 0.85;
+        });
+        widget(label, {
+          caption: $self.model.metadata.genres;
+          sizeScale: 0.86;
+          color: 0.7;
+          maxlines: 3;
+        });
+        widget(label, {
+          caption: $self.model.metadata.description;
+          sizeScale: 0.84;
+          color: 0.78;
+          maxlines: 9;
+        });
+      });
+
+      widget(container_y, {
+        weight: 2.1;
+        filterConstraintX: true;
+        spacing: 0.35em;
+
+        widget(container_x, {
+          height: 2em;
+          spacing: 0.5em;
+          widget(label, {
+            caption: "Эпизоды";
+            sizeScale: 1.3;
+          });
+          widget(dummy, { });
+          widget(label, {
+            caption: "Название";
+            sizeScale: 0.78;
+            color: 0.58;
+          });
+          widget(label, {
+            caption: "Длительность";
+            sizeScale: 0.78;
+            color: 0.58;
+          });
+        });
+
+        widget(list_y, {
+          spacing: 0.18em;
+          cloner($self.model.nodes, container_z, {
+            height: 3.15em;
+            focusable: 0.35;
+            onEvent(activate, navOpen($self.url));
+
+            widget(quad, {
+              color: [0.2, 0.28, 0.48];
+              alpha: select(isFocused(), 0.35, 0.12);
+            });
+            widget(container_x, {
+              padding: [0.15em, 0.35em];
+              spacing: 0.7em;
+              widget(label, {
+                caption: $self.display.episode;
+                width: 2.3em;
+                align: center;
+                sizeScale: 0.9;
+                color: [0.55, 0.75, 1.0];
+              });
+              widget(label, {
+                caption: $self.display.title;
+                sizeScale: 0.96;
+                maxlines: 1;
+                filterConstraintX: true;
+              });
+              widget(dummy, { });
+              widget(label, {
+                caption: $self.display.durationText;
+                sizeScale: 0.78;
+                color: 0.75;
+                align: right;
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+});

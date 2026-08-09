@@ -1,0 +1,128 @@
+// Prototype 3: Compact list — minimal, text-focused
+// No hero image, just info + scrollable episode list
+#import "../release_components.view"
+
+#define EP_LINE() {
+  widget(container_x, {
+    height: 2.8em;
+    focusable: 0.3;
+    spacing: 0.8em;
+    padding: [0.15em, 0.3em];
+
+    widget(quad, {
+      alpha: select(isFocused(), 0.1, 0.02);
+      color: [1, 1, 1];
+    });
+
+    widget(label, {
+      caption: $self.display.episode;
+      size: 1.2em;
+      color: [0.5, 0.7, 1.0];
+      width: 2em;
+      align: center;
+    });
+
+    widget(label, {
+      caption: $self.display.title;
+      size: 1.1em;
+      filterConstraintX: true;
+    });
+
+    widget(dummy, { });
+
+    widget(label, {
+      caption: $self.display.durationText;
+      size: 0.85em;
+      color: 0.7;
+    });
+
+  });
+}
+
+widget(container_z, {
+
+  widget(quad, {
+    color: [0.08, 0.08, 0.12];
+  });
+
+  widget(container_x, {
+    padding: [0.8em, 1em];
+    spacing: 1.5em;
+
+    // Left: compact info
+    widget(container_y, {
+      weight: 1.0;
+      filterConstraintX: true;
+      spacing: 0.4em;
+
+      widget(label, {
+        caption: $self.model.metadata.title;
+        size: 2.0em;
+        bold: true;
+      });
+
+      widget(label, {
+        hidden: !$self.model.metadata.subtitle;
+        caption: $self.model.metadata.subtitle;
+        size: 1.0em;
+        color: 0.7;
+      });
+
+      widget(container_x, {
+        spacing: 0.6em;
+        widget(label, {
+          caption: $self.model.metadata.year;
+          size: 0.95em;
+          color: 0.8;
+        });
+        widget(label, {
+          caption: $self.model.metadata.status;
+          size: 0.95em;
+          color: [0.4, 0.85, 0.4];
+        });
+        widget(label, {
+          hidden: !$self.model.metadata.ageRating;
+          caption: $self.model.metadata.ageRating;
+          size: 0.95em;
+          color: 0.6;
+        });
+      });
+
+      widget(label, {
+        caption: $self.model.metadata.genres;
+        size: 0.85em;
+        color: 0.65;
+      });
+
+      RELEASE_RESUME_BUTTON();
+
+      widget(label, {
+        caption: $self.model.metadata.description;
+        size: 0.9em;
+        maxlines: 8;
+        color: 0.8;
+      });
+    });
+
+    // Right: episode list
+    widget(container_y, {
+      weight: 1.8;
+      filterConstraintX: true;
+      spacing: 0.3em;
+
+      widget(label, {
+        caption: "Episodes";
+        size: 1.3em;
+        color: 0.85;
+      });
+
+      widget(list_y, {
+        spacing: 0.15em;
+
+        cloner($self.model.nodes, container_z, {
+          EP_LINE();
+        });
+      });
+    });
+  });
+});

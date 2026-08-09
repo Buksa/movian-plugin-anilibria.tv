@@ -1,0 +1,141 @@
+// Prototype 2: Hero backdrop — full-width poster with gradient overlay
+// Netflix/plex style: hero image top, info overlay, episodes below
+#import "../release_components.view"
+
+#define EP_CARD() {
+  widget(container_z, {
+    width: 12em;
+    height: 7em;
+    focusable: 0.5;
+
+    widget(quad, {
+      alpha: select(isFocused(), 0.2, 0.06);
+      color: [1, 1, 1];
+    });
+
+    widget(image, {
+      source: $self.display.preview;
+      alpha: 0.7;
+    });
+
+    widget(container_y, {
+      align: bottom;
+      padding: [0.3em, 0.4em];
+      widget(label, {
+        caption: $self.display.episode;
+        size: 1.8em;
+        bold: true;
+      });
+      widget(label, {
+        caption: $self.display.title;
+        size: 0.85em;
+        color: 0.9;
+        maxlines: 1;
+      });
+    });
+
+  });
+}
+
+widget(container_z, {
+
+  // Hero backdrop — full-width poster
+  widget(image, {
+    source: $self.model.metadata.poster_landscape;
+    height: $ui.height * 0.55;
+    alpha: 0.4;
+    color: 0.6;
+    aspectConstraint: true;
+  });
+
+  // Gradient overlay
+  widget(container_y, {
+    align: bottom;
+    widget(quad, {
+      height: $ui.height * 0.35;
+      color: [0.06, 0.06, 0.1];
+      alpha: 0;
+    });
+    widget(quad, {
+      height: $ui.height * 0.2;
+      color: [0.06, 0.06, 0.1];
+      alpha: 0.7;
+    });
+    widget(quad, {
+      color: [0.06, 0.06, 0.1];
+    });
+  });
+
+  // Content overlay
+  widget(container_y, {
+    padding: [0, 1.5em, 1em, 1.5em];
+    spacing: 0.5em;
+
+    // Title block over the hero
+    widget(container_y, {
+      padding: [0, 0, 1em, 0];
+      widget(label, {
+        caption: $self.model.metadata.title;
+        size: 2.8em;
+        bold: true;
+      });
+      widget(label, {
+        hidden: !$self.model.metadata.subtitle;
+        caption: $self.model.metadata.subtitle;
+        size: 1.2em;
+        color: 0.75;
+      });
+      widget(container_x, {
+        spacing: 0.8em;
+        widget(label, {
+          caption: $self.model.metadata.year;
+          size: 1.0em;
+          color: 0.85;
+        });
+        widget(label, {
+          caption: $self.model.metadata.status;
+          size: 1.0em;
+          color: [0.4, 0.85, 0.4];
+        });
+        widget(label, {
+          hidden: !$self.model.metadata.ageRating;
+          caption: $self.model.metadata.ageRating;
+          size: 1.0em;
+          color: 0.7;
+        });
+      });
+      widget(label, {
+        caption: $self.model.metadata.genres;
+        size: 0.9em;
+        color: 0.7;
+      });
+    });
+
+    // Resume widget
+    RELEASE_RESUME_BUTTON();
+
+    // Episodes — horizontal scroll cards
+    widget(label, {
+      caption: "Episodes";
+      size: 1.4em;
+      color: 0.9;
+    });
+
+    widget(list_x, {
+      height: 8em;
+      spacing: 0.8em;
+
+      cloner($self.model.nodes, container_z, {
+        EP_CARD();
+      });
+    });
+
+    // Description
+    widget(label, {
+      caption: $self.model.metadata.description;
+      size: 0.95em;
+      maxlines: 5;
+      color: 0.8;
+    });
+  });
+});

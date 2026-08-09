@@ -1,0 +1,104 @@
+// Large cinematic card grid for the AniLibria catalog.
+
+#import "skin://theme.view"
+
+widget(container_z, {
+  widget(array, {
+    id: "scrollable";
+    margin: [0.6em, 0, 0.6em, 0];
+    childTilesX: select($ui.aspect > 1.2, 4, 2);
+    childTilesY: 4;
+    Xspacing: 0.45em;
+    Yspacing: 0.55em;
+    chaseFocus: true;
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 3em;
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+
+    cloner($self.model.nodes, displacement, {
+      focusable: 1;
+      padding: [0.25em, 0.15em, 0.25em, 0.15em];
+      scaling: [
+        0.9 + iir(isNavFocused() + isHovered(), 3) * 0.1,
+        0.9 + iir(isNavFocused() + isHovered(), 3) * 0.1,
+        1.0
+      ];
+      onEvent(activate, navOpen($self.url));
+      onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+      widget(container_z, {
+        height: 15em;
+        widget(quad, {
+          color: [0.55, 0.12, 0.1];
+          alpha: iir(isNavFocused(), 4) * 0.8;
+        });
+        widget(image, {
+          margin: 0.16em;
+          source: $self.metadata.icon ?? "skin://graphics/logo.svg";
+          aspectConstraint: true;
+          color: 0.68 + iir(isNavFocused() + isHovered(), 4) * 0.32;
+        });
+        widget(container_y, {
+          align: bottom;
+          padding: [0.25em, 0.4em];
+          spacing: 0.15em;
+          widget(label, {
+            caption: $self.metadata.title;
+            maxlines: 2;
+            ellipsize: true;
+            align: center;
+            sizeScale: 0.9;
+            bgcolor: 0;
+            bgalpha: 0.82;
+            shadow: 1;
+          });
+          widget(container_x, {
+            hidden: isVoid($self.metadata.year) && isVoid($self.metadata.duration);
+            spacing: 0.4em;
+            widget(label, {
+              hidden: isVoid($self.metadata.year);
+              caption: $self.metadata.year;
+              sizeScale: 0.65;
+              color: [0.42, 0.85, 0.5];
+            });
+            widget(label, {
+              hidden: isVoid($self.metadata.duration);
+              caption: value2duration($self.metadata.duration);
+              sizeScale: 0.65;
+              color: 0.65;
+            });
+          });
+        });
+        widget(container_z, {
+          hidden: !isNavFocused();
+          widget(image, {
+            align: center;
+            source: "skin://icons/ic_play_circle_outline_48px.svg";
+            height: 3.2em;
+            shadow: 3;
+          });
+        });
+      });
+    });
+  });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+  widget(container_y, {
+    align: top;
+    widget(container_z, {
+      height: 3em;
+      zoffset: 10;
+      widget(quad, { color: 0; alpha: 0.6; });
+      widget(label, {
+        caption: $self.model.metadata.title;
+        align: center;
+        sizeScale: 1.2;
+        shadow: 1;
+      });
+    });
+  });
+});

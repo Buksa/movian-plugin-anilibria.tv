@@ -57,21 +57,30 @@ test('returns no image for a missing poster', function () {
     assert.strictEqual(assets.imageSet({}), undefined);
 });
 
-test('uses the plugin logo only for a release without a poster', function () {
-    var ui = require('../lib/ui');
-    var page = {
-        metadata: {},
-        appendItem: function () {},
-        appendPassiveItem: function () {}
-    };
-
-    ui.renderRelease(page, {
-        metadata: { title: 'No poster', subtitle: '', logo: 'logo.png' },
-        description: null,
-        franchise: null,
-        episodes: [],
-        torrents: []
+test('builds landscape episode previews and falls back to the poster', function () {
+    var preview = assets.episodeImageSet({
+        optimized: {
+            preview: '/episode-preview.webp',
+            src: '/episode.webp'
+        }
+    }, {
+        src: '/poster.jpg'
     });
 
-    assert.strictEqual(page.metadata.logo, 'logo.png');
+    assert.deepStrictEqual(imageList(preview), [
+        {
+            url: 'https://static-libria.weekstorm.one/episode-preview.webp',
+            width: 640,
+            height: 360
+        },
+        {
+            url: 'https://static-libria.weekstorm.one/episode.webp',
+            width: 1280,
+            height: 720
+        }
+    ]);
+    assert.strictEqual(
+        imageList(assets.episodeImageSet(null, { src: '/poster.jpg' }))[0].height,
+        600
+    );
 });

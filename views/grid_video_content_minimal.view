@@ -1,0 +1,102 @@
+// Compact poster grid for the AniLibria catalog.
+
+#import "skin://theme.view"
+
+widget(container_z, {
+  widget(array, {
+    id: "scrollable";
+    margin: [1em, 0, 1em, 0];
+    childTilesX: select($ui.aspect > 1.2, 6, 2);
+    childTilesY: 4;
+    Xspacing: 0.55em;
+    Yspacing: 0.55em;
+    chaseFocus: true;
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 4em;
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+
+    cloner($self.model.nodes, displacement, {
+      focusable: 1;
+      padding: 0.18em;
+      scaling: [
+        0.96 + iir(isNavFocused(), 5) * 0.04,
+        0.96 + iir(isNavFocused(), 5) * 0.04,
+        1.0
+      ];
+      onEvent(activate, navOpen($self.url));
+      onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+      widget(container_z, {
+        widget(image, {
+          source: $self.metadata.icon ?? "skin://graphics/logo.svg";
+          aspectConstraint: true;
+          color: 0.72 + iir(isNavFocused(), 5) * 0.28;
+        });
+        widget(quad, {
+          color: [0.04, 0.07, 0.14];
+          alpha: select(isNavFocused(), 0.1, 0.28);
+        });
+        widget(container_y, {
+          align: bottom;
+          padding: [0.35em, 0.3em];
+          spacing: 0.15em;
+          widget(label, {
+            caption: $self.metadata.title;
+            maxlines: 2;
+            ellipsize: true;
+            align: center;
+            sizeScale: 0.78;
+            color: 0.9 + iir(isNavFocused(), 5) * 0.1;
+            bgcolor: 0;
+            bgalpha: 0.72;
+          });
+          widget(label, {
+            hidden: isVoid($self.metadata.year) && isVoid($self.metadata.genre);
+            caption: join(" · ", $self.metadata.year, $self.metadata.genre);
+            maxlines: 1;
+            align: center;
+            sizeScale: 0.62;
+            color: 0.65;
+          });
+        });
+        widget(container_z, {
+          hidden: !isNavFocused();
+          widget(image, {
+            align: center;
+            source: "skin://icons/ic_play_arrow_48px.svg";
+            height: 2.5em;
+            shadow: 2;
+          });
+        });
+      });
+    });
+  });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+  widget(container_y, {
+    align: top;
+    widget(container_z, {
+      height: 3em;
+      zoffset: 10;
+      widget(quad, { color: 0; alpha: 0.5; });
+      widget(image, {
+        align: left;
+        margin: [0.5em, 0.65em];
+        source: $self.model.metadata.icon;
+        height: 2em;
+      });
+      widget(label, {
+        padding: [4em, 0];
+        align: center;
+        caption: $self.model.metadata.title;
+        sizeScale: 1.3;
+        shadow: 1;
+        alpha: 0.9;
+      });
+    });
+  });
+});

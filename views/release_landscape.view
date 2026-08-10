@@ -189,19 +189,13 @@ widget(container_z, {
                 maxlines: 1;
               });
               // Horizontally scrollable franchise cards.
-              widget(list_x, {
-                id: "release-franchise";
-                height: 15.5em;
-                // focusable: 1;
-                // chaseFocus: true;
-                // navWrap: false;
-                spacing: 0.65em;
-                // Create one focusable card per franchise release.
-                cloner($self.model.metadata.franchise.releases,
-                  container_z, {
-                    RELEASE_FRANCHISE_CARD();
-                  });
-              });
+              HORIZONTAL_FOCUS_LIST(
+                "release-franchise",
+                15.5em,
+                0.65em,
+                $self.model.metadata.franchise.releases,
+                RELEASE_FRANCHISE_CARD
+              );
             });
 
             // Torrent groups panel.

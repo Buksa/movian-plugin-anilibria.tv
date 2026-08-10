@@ -297,6 +297,19 @@
     });
   });
 }
+#define HORIZONTAL_FOCUS_LIST(ID, HEIGHT, SPACING, ITEMS, CARD) {
+  widget(list_x, {
+    id: ID;
+    height: HEIGHT;
+    chaseFocus: true;
+    navWrap: false;
+    spacing: SPACING;
+    cloner(ITEMS, container_z, {
+      CARD();
+    });
+  });
+}
+
 
 #define STAR_FULL() {
   widget(icon, {

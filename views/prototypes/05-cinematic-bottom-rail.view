@@ -2,6 +2,60 @@
 // Full-screen artwork with a readable title block and a horizontal episode shelf.
 #import "../release_components.view"
 
+#define CINEMATIC_EPISODE_CARD() {
+  width: 10em;
+  height: 6.1em;
+  focusable: true;
+  onEvent(activate, navOpen($self.url));
+
+  // Focus highlight for the active episode card.
+  widget(quad, {
+    color: [1, 1, 1];
+    alpha: select(isNavFocused(), 0.24, 0.06);
+  });
+
+  // Episode preview artwork.
+  widget(image, {
+    source: $self.display.preview;
+    aspectConstraint: true;
+  });
+
+  // Bottom title strip inside the episode card.
+  widget(container_z, {
+    align: bottom;
+    height: 2.2em;
+
+    // Semi-transparent title strip background.
+    widget(quad, {
+      color: [0.02, 0.025, 0.05];
+      alpha: 0.65;
+    });
+
+    // Episode number and title labels.
+    widget(container_y, {
+      padding: [0.18em, 0.3em];
+      widget(label, {
+        caption: "EP " + $self.display.episode;
+        sizeScale: 0.82;
+        bold: true;
+      });
+      widget(label, {
+        caption: $self.display.title;
+        sizeScale: 0.63;
+        color: 0.84;
+        maxlines: 1;
+      });
+    });
+  });
+
+  // Visible focus frame above the artwork and title strip.
+  widget(border, {
+    border: 0.12em;
+    color: [1, 1, 1];
+    alpha: 0.8 * iir(isNavFocused() + isHovered(), 4);
+  });
+}
+
 widget(container_z, {
   width: $ui.width;
   height: $ui.height;
@@ -71,65 +125,12 @@ widget(container_z, {
       color: 0.95;
     });
 
-    widget(list_x, {
-      navFocusable: true;
-      height: 6.4em;
-      spacing: 0.65em;
-
-      // One focusable card per episode.
-      cloner($self.model.nodes, container_z, {
-        width: 10em;
-        height: 6.1em;
-        focusable: true;
-        onEvent(activate, navOpen($self.url));
-
-        // Focus highlight for the active episode card.
-        widget(quad, {
-          color: [1, 1, 1];
-          alpha: select(isNavFocused(), 0.24, 0.06);
-        });
-
-        // Episode preview artwork.
-        widget(image, {
-          source: $self.display.preview;
-          aspectConstraint: true;
-        });
-
-        // Bottom title strip inside the episode card.
-        widget(container_z, {
-          align: bottom;
-          height: 2.2em;
-
-          // Semi-transparent title strip background.
-          widget(quad, {
-            color: [0.02, 0.025, 0.05];
-            alpha: 0.65;
-          });
-
-          // Episode number and title labels.
-          widget(container_y, {
-            padding: [0.18em, 0.3em];
-            widget(label, {
-              caption: "EP " + $self.display.episode;
-              sizeScale: 0.82;
-              bold: true;
-            });
-            widget(label, {
-              caption: $self.display.title;
-              sizeScale: 0.63;
-              color: 0.84;
-              maxlines: 1;
-            });
-          });
-        });
-
-        // Visible focus frame above the artwork and title strip.
-        widget(border, {
-          border: 0.12em;
-          color: [1, 1, 1];
-          alpha: 0.8 * iir(isNavFocused() + isHovered(), 4);
-        });
-      });
-    });
+    HORIZONTAL_FOCUS_LIST(
+      "cinematic-episodes",
+      6.4em,
+      0.65em,
+      $self.model.nodes,
+      CINEMATIC_EPISODE_CARD
+    );
   });
 });

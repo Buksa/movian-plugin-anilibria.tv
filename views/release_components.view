@@ -290,6 +290,13 @@
       color: 0.62;
     });
   });
+
+  // Explicit focus frame: drawn last so it stays above the poster and labels.
+  widget(border, {
+    border: 0.14em;
+    color: [0.35, 0.7, 1.0];
+    alpha: 0.95 * iir(isNavFocused() + isHovered(), 4);
+  });
 }
 
 #define RELEASE_TECH_BADGE(CAPTION, HIDDEN, COLOR) {

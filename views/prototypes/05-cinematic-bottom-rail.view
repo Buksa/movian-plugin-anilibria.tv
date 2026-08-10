@@ -3,18 +3,22 @@
 #import "../release_components.view"
 
 widget(container_z, {
-  widget(image, {
+  width: $ui.width;
+  height: $ui.height;
+  widget(backdrop, {
     source: $self.model.metadata.poster_landscape;
     width: $ui.width;
     height: $ui.height;
-    aspectConstraint: true;
-    alpha: 0.38;
-    color: 0.7;
+    filterConstraintX: true;
+    filterConstraintY: true;
+    alpha: 0.55;
+    color: 0.85;
   });
 
+  // Global readability veil; keep it light so cards and artwork stay visible.
   widget(quad, {
     color: [0.025, 0.035, 0.08];
-    alpha: 0.58;
+    alpha: 0.32;
   });
 
   widget(container_y, {
@@ -68,30 +72,41 @@ widget(container_z, {
     });
 
     widget(list_x, {
+      navFocusable: true;
       height: 6.4em;
       spacing: 0.65em;
+
+      // One focusable card per episode.
       cloner($self.model.nodes, container_z, {
         width: 10em;
         height: 6.1em;
-        focusable: 0.5;
+        focusable: true;
         onEvent(activate, navOpen($self.url));
 
+        // Focus highlight for the active episode card.
         widget(quad, {
           color: [1, 1, 1];
-          alpha: select(isFocused(), 0.18, 0.06);
+          alpha: select(isNavFocused(), 0.24, 0.06);
         });
+
+        // Episode preview artwork.
         widget(image, {
           source: $self.display.preview;
           aspectConstraint: true;
-          alpha: 0.72;
         });
+
+        // Bottom title strip inside the episode card.
         widget(container_z, {
           align: bottom;
           height: 2.2em;
+
+          // Semi-transparent title strip background.
           widget(quad, {
             color: [0.02, 0.025, 0.05];
             alpha: 0.65;
           });
+
+          // Episode number and title labels.
           widget(container_y, {
             padding: [0.18em, 0.3em];
             widget(label, {
@@ -106,6 +121,13 @@ widget(container_z, {
               maxlines: 1;
             });
           });
+        });
+
+        // Visible focus frame above the artwork and title strip.
+        widget(border, {
+          border: 0.12em;
+          color: [1, 1, 1];
+          alpha: 0.8 * iir(isNavFocused() + isHovered(), 4);
         });
       });
     });

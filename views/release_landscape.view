@@ -126,11 +126,11 @@ widget(container_z, {
               // Episodes heading and count.
               widget(container_x, {
                 height: 1.7em;
-                // Episodes section title.
-                widget(label, {
-                  caption: "Серии";
-                  sizeScale: 1.2;
-                });
+                // // Episodes section title.
+                // widget(label, {
+                //   caption: "Серии";
+                //   sizeScale: 1.2;
+                // });
                 // Flexible spacer before the episode count.
                 widget(dummy, { });
                 // Number of available episodes.
@@ -190,8 +190,13 @@ widget(container_z, {
               });
               // Horizontally scrollable franchise cards.
               widget(list_x, {
+                id: "release-franchise";
+                height: 15.5em;
+                // focusable: 1;
+                // chaseFocus: true;
+                // navWrap: false;
                 spacing: 0.65em;
-                // Create one card per franchise release.
+                // Create one focusable card per franchise release.
                 cloner($self.model.metadata.franchise.releases,
                   container_z, {
                     RELEASE_FRANCHISE_CARD();
@@ -204,11 +209,11 @@ widget(container_z, {
             widget(container_y, {
               hidden: $self.model.metadata.activeTab != "torrents";
               spacing: 0.35em;
-              // Torrent section title.
-              widget(label, {
-                caption: "Торренты";
-                sizeScale: 1.2;
-              });
+              // // Torrent section title.
+              // widget(label, {
+              //   caption: "Торренты";
+              //   sizeScale: 1.2;
+              // });
               // Scrollable torrent groups and scrollbar.
               widget(container_x, {
                 // Keyboard-navigable torrent list.

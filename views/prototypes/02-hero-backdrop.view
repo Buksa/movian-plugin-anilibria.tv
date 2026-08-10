@@ -15,7 +15,6 @@
 
     widget(image, {
       source: $self.display.preview;
-      alpha: 0.7;
     });
 
     widget(container_y, {
@@ -38,14 +37,18 @@
 }
 
 widget(container_z, {
+  width: $ui.width;
+  height: $ui.height;
 
   // Hero backdrop — full-width poster
-  widget(image, {
+  widget(backdrop, {
     source: $self.model.metadata.poster_landscape;
+    width: $ui.width;
     height: $ui.height * 0.55;
+    filterConstraintX: true;
+    filterConstraintY: true;
     alpha: 0.4;
     color: 0.6;
-    aspectConstraint: true;
   });
 
   // Gradient overlay

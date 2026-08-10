@@ -126,6 +126,7 @@ test('separates episode display fields from confident TV metadata identity', fun
         'Основное имя (English release Season 2)'
     );
     assert.strictEqual(episode.metadata.title, 'Падший');
+    assert.strictEqual(episode.metadata.duration, 2369);
     assert.strictEqual(episode.display.title, 'Падший');
     assert.strictEqual(episode.display.subtitle, 'Эпизод 1');
     assert.strictEqual(episode.display.durationText, '39 мин 29 сек');

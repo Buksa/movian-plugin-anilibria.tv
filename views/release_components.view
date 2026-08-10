@@ -131,61 +131,118 @@
     focus("release-tab-episodes");
   }, $self.display.episode == 1);
 
+  // Episode row background and focus highlight.
   widget(quad, {
     color: [0.16, 0.23, 0.4];
     alpha: select(isFocused(), 0.34, 0.1);
   });
 
+  // Horizontal row layout: thumbnail on the left, details on the right.
   widget(container_x, {
     padding: [0.2em, 0.35em];
     spacing: 0.75em;
 
+    // Fixed thumbnail stage.
     widget(container_z, {
       width: 7em;
+
+      // Episode preview image.
       widget(image, {
         source: $self.display.preview;
         alpha: 1.0;
       });
-      widget(container_y, {
-        align: bottom;
-        widget(container_x, {
-          align: left;
-          widget(container_z, {
-            widget(quad, {
-              color: 0;
-              alpha: 0.7;
-            });
-            widget(label, {
-              padding: [0.3em, 0.1em];
-              caption: $self.display.episode;
-              sizeScale: 0.8;
-            });
-          });
-        });
+
+      // Episode number label anchored to the thumbnail's bottom-left corner.
+      widget(label, {
+        caption: $self.display.episode;
+        size: 2.2em;
+        align: bottomLeft;
+        padding: [0.3em, 0.1em];
+      });
+
+      // Check mark for episodes completed by Movian play history.
+      widget(icon, {
+        source: "skin://icons/ic_check_48px.svg";
+        alpha: select($self.playcount > 0, 1, 0);
+        align: center;
+        size: 3.5em;
       });
     });
 
+    // Episode title, metadata and optional progress.
     widget(container_y, {
       filterConstraintX: true;
       align: center;
       spacing: 0.22em;
-      widget(label, {
-        caption: $self.display.title;
-        sizeScale: 1.02;
-        maxlines: 1;
+
+      // Episode title and watched-state metadata on one line.
+      widget(container_x, {
+        filterConstraintX: true;
+        spacing: 0.5em;
+
+        // Episode title.
+        widget(label, {
+          caption: $self.display.title;
+          filterConstraintX: true;
+          ellipsize: true;
+          maxlines: 1;
+        });
+
+        // Number of completed plays and the last watched time.
+        widget(label, {
+          hidden: $self.playcount < 1;
+          caption: fmt(_pl("Seen %d times, %s", "Seen %d time, %s",
+            $self.playcount),
+            $self.playcount,
+            timeAgo($core.clock.unixtime - $self.lastplayed));
+          style: "ListItemLabelDimmed";
+          maxlines: 1;
+        });
       });
+
+      // Subtitle and duration line.
       widget(container_x, {
         spacing: 0.45em;
+
+        // Episode subtitle.
         widget(label, {
           caption: $self.display.subtitle;
           sizeScale: 0.76;
           color: 0.68;
         });
+
+        // Human-readable episode duration.
         widget(label, {
           hidden: !$self.display.durationText;
           caption: "•  " + $self.display.durationText;
           sizeScale: 0.76;
           color: 0.68;
+        });
+      });
+
+      // Show the progress track only for partially watched episodes.
+      widget(container_y, {
+        alpha: select($self.restartpos > 0, 1, 0);
+        height: 1em;
+        align: center;
+
+        // Layer the unplayed track and played portion.
+        widget(container_z, {
+          height: 3;
+
+          // Unplayed track.
+          widget(quad, {
+            color: 0;
+            alpha: 0.7;
+          });
+
+          // Played portion, rendered in white.
+          widget(bar, {
+            color1: [1.0, 1.0, 1.0];
+            color2: [1.0, 1.0, 1.0];
+            fill: select($self.metadata.duration > 0,
+              $self.restartpos / $self.metadata.duration, 0);
+          });
         });
       });
     });

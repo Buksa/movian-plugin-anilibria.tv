@@ -2,29 +2,37 @@
 #import "release_components.view"
 
 
+// Root stack: page content plus loading/error and overview overlays.
 widget(container_z, {
+  // Content layer with the release view state.
   widget(container_z, {
     hidden: $self.model.loading || $self.model.error ||
       $self.model.metadata.showOverview;
 
+    // Full-page dark background.
     widget(quad, {
       color: [0.035, 0.045, 0.085];
     });
 
+    // Main page column with outer padding and vertical spacing.
     widget(container_y, {
       padding: [0.9em, 1.2em];
       spacing: 0.65em;
 
+      // Header row: title block, spacer, and status badge.
       widget(container_x, {
         height: 3.1em;
         spacing: 0.8em;
+        // Title and subtitle column.
         widget(container_y, {
           filterConstraintX: true;
+          // Main release title.
           widget(label, {
             caption: $self.model.metadata.title;
             sizeScale: 2.0;
             maxlines: 1;
           });
+          // Optional English subtitle.
           widget(label, {
             caption: $self.model.metadata.subtitle;
             hidden: !$self.model.metadata.subtitle;
@@ -32,87 +40,110 @@ widget(container_z, {
             color: 0.65;
           });
         });
+        // Flexible spacer before the status badge.
         widget(dummy, { });
         RELEASE_STATUS_BADGE();
       });
 
+      // Main two-column layout: release context and active content.
       widget(container_x, {
         height: $ui.height * 0.78;
         spacing: 1.35em;
 
         // Persistent release context.
+        // Left column: poster and persistent release metadata.
         widget(container_y, {
           weight: 0.9;
           filterConstraintX: true;
           spacing: 0.42em;
 
+          // Poster card with age-rating overlay.
           RELEASE_POSTER_CARD();
 
+          // Release year.
           widget(label, {
             caption: $self.model.metadata.year;
             sizeScale: 0.95;
             color: 0.85;
           });
+          // Release genres.
           widget(label, {
             caption: $self.model.metadata.genres;
             sizeScale: 0.8;
             color: 0.68;
             maxlines: 2;
           });
+          // Release description.
           widget(label, {
             caption: $self.model.metadata.description;
             sizeScale: 0.8;
             color: 0.78;
             maxlines: 8;
           });
+          // Opens the full release overview.
           RELEASE_OVERVIEW_BUTTON();
 
+          // Resumes the last watched episode when available.
           RELEASE_RESUME_BUTTON();
         });
 
         // Active content panel.
+        // Right column: tabs and the selected content panel.
         widget(container_y, {
           weight: 2.1;
           filterConstraintX: true;
           spacing: 0.45em;
 
+          // Secondary navigation tabs.
           widget(container_x, {
             hidden: !$self.model.metadata.hasSecondaryTabs;
             height: 2.4em;
             spacing: 0.45em;
+            // Episodes tab.
             RELEASE_TAB_BUTTON("episodes", "СЕРИИ",
               $self.model.metadata.episodeCount, true);
+            // Franchise tab.
             RELEASE_TAB_BUTTON("franchise", "ФРАНШИЗА",
               $self.model.metadata.franchiseCount,
               $self.model.metadata.franchiseCount > 0);
+            // Torrents tab.
             RELEASE_TAB_BUTTON("torrents", "ТОРРЕНТЫ",
               $self.model.metadata.torrentCount,
               $self.model.metadata.torrentCount > 0);
+            // Flexible spacer after the tabs.
             widget(dummy, { });
           });
 
+          // Active tab content stack.
           widget(container_z, {
             weight: 1;
 
             // Episodes.
+            // Episodes panel.
             widget(container_y, {
               hidden: $self.model.metadata.activeTab != "episodes";
               spacing: 0.3em;
+              // Episodes heading and count.
               widget(container_x, {
                 height: 1.7em;
+                // Episodes section title.
                 widget(label, {
                   caption: "Серии";
                   sizeScale: 1.2;
                 });
+                // Flexible spacer before the episode count.
                 widget(dummy, { });
+                // Number of available episodes.
                 widget(label, {
                   caption: $self.model.metadata.episodeCount;
                   sizeScale: 0.76;
                   color: 0.58;
                 });
               });
+              // Empty-state message when no episodes are published.
               widget(container_z, {
                 hidden: $self.model.metadata.episodeCount > 0;
+                // Empty-state label.
                 widget(label, {
                   caption: "Серии пока не опубликованы";
                   align: center;
@@ -120,29 +151,36 @@ widget(container_z, {
                   color: 0.62;
                 });
               });
+              // Scrollable episode list and its scrollbar.
               widget(container_x, {
                 hidden: !($self.model.metadata.episodeCount > 0);
+                // Keyboard-navigable episode list.
                 widget(list_y, {
                   .id = "release-episodes";
                   spacing: 0.28em;
                   chaseFocus: true;
+                  // Create one focusable row per episode.
                   cloner($self.model.nodes, container_z, {
                     RELEASE_EPISODE_ROW();
                   });
                 });
+                // Vertical scrollbar for the episode list.
                 LIST_Y_SLIDER("release-episodes", true);
               });
             });
 
             // Franchise releases.
+            // Franchise releases panel.
             widget(container_y, {
               hidden: $self.model.metadata.activeTab != "franchise";
               spacing: 0.45em;
+              // Franchise title.
               widget(label, {
                 caption: $self.model.metadata.franchise.title;
                 sizeScale: 1.15;
                 maxlines: 1;
               });
+              // Optional franchise metadata.
               widget(label, {
                 hidden: !$self.model.metadata.franchise.info;
                 caption: $self.model.metadata.franchise.info;
@@ -150,8 +188,10 @@ widget(container_z, {
                 color: 0.62;
                 maxlines: 1;
               });
+              // Horizontally scrollable franchise cards.
               widget(list_x, {
                 spacing: 0.65em;
+                // Create one card per franchise release.
                 cloner($self.model.metadata.franchise.releases,
                   container_z, {
                     RELEASE_FRANCHISE_CARD();
@@ -159,28 +199,35 @@ widget(container_z, {
               });
             });
 
+            // Torrent groups panel.
             // Torrent groups.
             widget(container_y, {
               hidden: $self.model.metadata.activeTab != "torrents";
               spacing: 0.35em;
+              // Torrent section title.
               widget(label, {
                 caption: "Торренты";
                 sizeScale: 1.2;
               });
+              // Scrollable torrent groups and scrollbar.
               widget(container_x, {
+                // Keyboard-navigable torrent list.
                 widget(list_y, {
                   .id = "release-torrents";
                   spacing: 0.5em;
                   chaseFocus: true;
+                  // Create one section per torrent quality.
                   cloner($self.model.metadata.torrentGroups,
                     container_y, {
                       spacing: 0.25em;
+                      // Torrent quality heading.
                       widget(label, {
                         caption: $self.quality;
                         height: 1.5em;
                         sizeScale: 0.9;
                         color: [0.5, 0.72, 1.0];
                       });
+                      // Create rows for torrents in this quality group.
                       cloner($self.items, container_z, {
                         RELEASE_TORRENT_ROW();
                       });
@@ -195,6 +242,8 @@ widget(container_z, {
     });
   });
 
+  // Loading and error state overlay.
   RELEASE_LOADING_AND_ERROR();
+  // Full-screen overview overlay.
   RELEASE_OVERVIEW_OVERLAY();
 });

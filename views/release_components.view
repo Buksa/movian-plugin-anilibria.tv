@@ -123,13 +123,13 @@
 
 #define RELEASE_EPISODE_ROW() {
   height: 4.7em;
-  id: select($self.display.episode == 1,
+  id: select($self.playback.episode == 1,
     "release-first-episode", void);
   focusable: 1.0;
   onEvent(activate, navOpen($self.url));
   onEvent(up, {
     focus("release-tab-episodes");
-  }, $self.display.episode == 1);
+  }, $self.playback.episode == 1);
 
   // Episode row background and focus highlight.
   widget(quad, {
@@ -148,13 +148,13 @@
 
       // Episode preview image.
       widget(image, {
-        source: $self.display.preview;
+        source: $self.playback.preview;
         alpha: 1.0;
       });
 
       // Episode number label anchored to the thumbnail's bottom-left corner.
       widget(label, {
-        caption: $self.display.episode;
+        caption: $self.playback.episode;
         size: 2.2em;
         align: bottomLeft;
         padding: [0.3em, 0.1em];
@@ -182,7 +182,7 @@
 
         // Episode title.
         widget(label, {
-          caption: $self.display.title;
+          caption: $self.playback.title;
           filterConstraintX: true;
           ellipsize: true;
           maxlines: 1;
@@ -206,15 +206,15 @@
 
         // Episode subtitle.
         widget(label, {
-          caption: $self.display.subtitle;
+          caption: $self.playback.subtitle;
           sizeScale: 0.76;
           color: 0.68;
         });
 
         // Human-readable episode duration.
         widget(label, {
-          hidden: !$self.display.durationText;
-          caption: "•  " + $self.display.durationText;
+          hidden: !$self.playback.durationText;
+          caption: "•  " + $self.playback.durationText;
           sizeScale: 0.76;
           color: 0.68;
         });
@@ -240,8 +240,8 @@
           widget(bar, {
             color1: [1.0, 1.0, 1.0];
             color2: [1.0, 1.0, 1.0];
-            fill: select($self.metadata.duration > 0,
-              $self.restartpos / $self.metadata.duration, 0);
+            fill: select($self.playback.duration > 0,
+              $self.restartpos / $self.playback.duration, 0);
           });
         });
       });

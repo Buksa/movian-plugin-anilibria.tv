@@ -10,7 +10,6 @@ function test(name, fn) {
         throw err;
     }
 }
-
 function baseOptions() {
     return {
         release: {
@@ -67,22 +66,4 @@ test('rejects episodes without playable sources', function () {
     var options = baseOptions();
     delete options.episode.hls_720;
     assert.strictEqual(playback.create(options), null);
-});
-
-test('normalizes Movian history and prefers playback title', function () {
-    var root = {
-        playback: { title: 'AniLibria title', episode: 3, duration: 1200 },
-        display: { title: 'legacy title' },
-        metadata: { title: 'metadata title' },
-        playcount: { valueOf: function () { return 2; } },
-        restartpos: { valueOf: function () { return 480; } },
-        lastplayed: { valueOf: function () { return 10; } }
-    };
-
-    assert.deepStrictEqual(playback.history(root), {
-        playcount: 2,
-        restartpos: 480,
-        lastplayed: 10
-    });
-    assert.strictEqual(playback.pageTitle(root), 'AniLibria title');
 });

@@ -9,7 +9,7 @@ var settings = require('movian/settings');
 var api = require('./lib/api');
 var fmt = require('./lib/formatters');
 var ui = require('./lib/ui');
-var resume = require('./lib/resume');
+var watchedEpisode = require('./lib/watched-episode');
 var pagination = require('./lib/pagination');
 var releaseRoute = require('./lib/release-route');
 var log = require('./lib/log');
@@ -78,7 +78,7 @@ settings.createAction('testBypass', 'Проверить обход Cloudflare', 
     });
 });
 
-resume.createSettingsUI(settings);
+watchedEpisode.createSettingsUI(settings);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Маршруты

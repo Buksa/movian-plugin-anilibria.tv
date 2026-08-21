@@ -1,5 +1,5 @@
 var assert = require('assert');
-var resume = require('../lib/resume');
+var watchedEpisode = require('../lib/watched-episode');
 
 function value(value) {
     return {
@@ -31,8 +31,8 @@ function test(name, fn) {
     }
 }
 
-test('normalizes page candidate and recognizes partial playback', function () {
-    var candidate = resume.normalize({
+test('normalizes page episode and recognizes partial playback', function () {
+    var candidate = watchedEpisode.normalize({
         source: 'page',
         title: 'Episode 2',
         url: 'anilibria:episode:2',
@@ -44,24 +44,25 @@ test('normalizes page candidate and recognizes partial playback', function () {
     assert.strictEqual(candidate.source, 'page');
     assert.strictEqual(candidate.title, 'Episode 2');
     assert.strictEqual(candidate.restartpos, 120);
-    assert.strictEqual(resume.hasResumeSignal(candidate), true);
+    assert.strictEqual(watchedEpisode.hasWatchedSignal(candidate), true);
 });
 
-test('finds the last page candidate and the next video', function () {
+test('finds the last watched episode and the next video', function () {
     var items = [
         episode('video', 'Episode 1', 'anilibria:episode:1', 0, 0),
         episode('video', 'Episode 2', 'anilibria:episode:2', 0, 60),
         { root: { type: value('separator') } },
         episode('video', 'Episode 3', 'anilibria:episode:3', 1, 0)
     ];
-    var last = resume.findLastWatched(items);
-    var next = resume.findNext(items, last);
+    var last = watchedEpisode.findLastWatched(items);
+    var next = watchedEpisode.findNext(items, last);
 
     assert.strictEqual(last.title, 'Episode 3');
     assert.strictEqual(last.index, 3);
     assert.strictEqual(next, null);
 
-    next = resume.findNext(items, resume.findLastWatched(items.slice(0, 2)));
+    next = watchedEpisode.findNext(items,
+        watchedEpisode.findLastWatched(items.slice(0, 2)));
     assert.strictEqual(next.title, 'Episode 3');
     assert.strictEqual(next.index, 3);
 });
@@ -75,39 +76,39 @@ test('prefers stable AniLibria display title over external metadata', function (
         60,
         'Падший'
     );
-    var candidate = resume.findLastWatched([item]);
+    var candidate = watchedEpisode.findLastWatched([item]);
 
     assert.strictEqual(candidate.title, 'Падший');
     assert.strictEqual(candidate.historyTitle, 'Падший');
 });
 
 test('decides resume versus next without a history source', function () {
-    var partial = resume.normalize({
+    var partial = watchedEpisode.normalize({
         title: 'Episode 2',
         url: 'anilibria:episode:2',
         restartpos: 120
     });
-    var completed = resume.normalize({
+    var completed = watchedEpisode.normalize({
         title: 'Episode 2',
         url: 'anilibria:episode:2',
         playcount: 1
     });
-    var next = resume.normalize({
+    var next = watchedEpisode.normalize({
         title: 'Episode 3',
         url: 'anilibria:episode:3'
     });
 
-    assert.deepStrictEqual(resume.decide(partial, next, true), {
+    assert.deepStrictEqual(watchedEpisode.decide(partial, next, true), {
         kind: 'resume',
         last: partial,
         target: partial
     });
-    assert.deepStrictEqual(resume.decide(completed, next, true), {
+    assert.deepStrictEqual(watchedEpisode.decide(completed, next, true), {
         kind: 'next',
         last: completed,
         target: next
     });
-    assert.deepStrictEqual(resume.decide(completed, null, true), {
+    assert.deepStrictEqual(watchedEpisode.decide(completed, null, true), {
         kind: 'resume',
         last: completed,
         target: completed
@@ -126,13 +127,13 @@ test('uses injected effects for popup and navigation', function () {
             this.opened.push(url);
         }
     };
-    var last = resume.normalize({
+    var last = watchedEpisode.normalize({
         title: 'Episode 2',
         url: 'anilibria:episode:2',
         restartpos: 120
     });
 
-    resume.present({ kind: 'resume', last: last, target: last }, {
+    watchedEpisode.present({ kind: 'resume', last: last, target: last }, {
         effects: effects,
         autoResume: false
     });
@@ -142,7 +143,7 @@ test('uses injected effects for popup and navigation', function () {
 
     effects.messages = [];
     effects.opened = [];
-    resume.present({ kind: 'resume', last: last, target: last }, {
+    watchedEpisode.present({ kind: 'resume', last: last, target: last }, {
         effects: effects,
         autoResume: true
     });
@@ -170,7 +171,7 @@ test('orchestrates page scan after the configured delay', function () {
     ];
     var scheduledDelay;
 
-    resume.find({ getItems: function () { return items; } }, items, {
+    watchedEpisode.scan({ getItems: function () { return items; } }, items, {
         delay: 900,
         schedule: function (fn, delay) {
             scheduledDelay = delay;
@@ -182,4 +183,19 @@ test('orchestrates page scan after the configured delay', function () {
     assert.strictEqual(scheduledDelay, 900);
     assert.strictEqual(effects.messages.length, 1);
     assert.deepStrictEqual(effects.opened, ['anilibria:episode:3']);
+});
+
+test('does not schedule a scan when the policy is disabled', function () {
+    var scheduled = false;
+    var wasEnabled = watchedEpisode.config.enabled;
+    watchedEpisode.config.enabled = false;
+
+    watchedEpisode.scan({}, [], {
+        schedule: function () {
+            scheduled = true;
+        }
+    });
+
+    watchedEpisode.config.enabled = wasEnabled;
+    assert.strictEqual(scheduled, false);
 });

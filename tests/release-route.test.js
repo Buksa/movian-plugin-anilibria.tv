@@ -22,31 +22,6 @@ function page() {
     };
 }
 
-function route(overrides) {
-    var dependencies = {
-        resumeConfig: {
-            enabled: true,
-            autoResume: false,
-            findNext: true,
-            delay: 1500
-        },
-        load: function (id, logo, callback) {
-            callback(null, { title: 'model' });
-        },
-        render: function (target, model) {
-            target.loading = false;
-            target.rendered = model;
-        },
-        resumeFind: function () {}
-    };
-
-    Object.keys(overrides || {}).forEach(function (key) {
-        dependencies[key] = overrides[key];
-    });
-
-    return releaseRoute.create(dependencies);
-}
-
 function options() {
     return {
         id: 7,
@@ -56,17 +31,11 @@ function options() {
     };
 }
 
-test('owns release page initialization, render, and resume order', function () {
+test('owns release page initialization, render, and watched scan order', function () {
     var target = page();
     var events = [];
-    var resumeArgs;
+    var watchedArgs;
     var route = releaseRoute.create({
-        resumeConfig: {
-            enabled: true,
-            autoResume: false,
-            findNext: true,
-            delay: 1500
-        },
         load: function (id, logo, callback) {
             events.push('load:' + id + ':' + logo);
             assert.strictEqual(target.loading, true);
@@ -79,28 +48,23 @@ test('owns release page initialization, render, and resume order', function () {
             page.loading = false;
             page.rendered = model;
         },
-        resumeFind: function (page, items, config) {
-            events.push('resume');
-            resumeArgs = { page: page, items: items, config: config };
+        watchedScan: function (page) {
+            events.push('watched');
+            watchedArgs = { page: page };
         }
     });
 
     route.present(target, options());
 
-    assert.deepStrictEqual(events, ['load:7:logo.png', 'render', 'resume']);
+    assert.deepStrictEqual(events, ['load:7:logo.png', 'render', 'watched']);
     assert.strictEqual(target.loading, false);
-    assert.deepStrictEqual(resumeArgs.items, ['episode-node']);
-    assert.deepStrictEqual(resumeArgs.config, {
-        autoResume: false,
-        findNext: true,
-        delay: 1500
-    });
+    assert.strictEqual(watchedArgs.page, target);
 });
 
 test('publishes a route error and stops the ordering chain', function () {
     var target = page();
     var rendered = false;
-    var resumed = false;
+    var watched = false;
     var route = releaseRoute.create({
         load: function (id, logo, callback) {
             callback(new Error('network down'));
@@ -108,8 +72,8 @@ test('publishes a route error and stops the ordering chain', function () {
         render: function () {
             rendered = true;
         },
-        resumeFind: function () {
-            resumed = true;
+        watchedScan: function () {
+            watched = true;
         }
     });
 
@@ -120,24 +84,5 @@ test('publishes a route error and stops the ordering chain', function () {
     assert.strictEqual(target.metadata.retryUrl, 'anilibria:release:7');
     assert.strictEqual(target.model.error, 'Ошибка загрузки релиза: network down');
     assert.strictEqual(rendered, false);
-    assert.strictEqual(resumed, false);
-});
-
-test('does not schedule resume when disabled', function () {
-    var target = page();
-    var resumed = false;
-    var route = releaseRoute.create({
-        resumeConfig: { enabled: false },
-        load: function (id, logo, callback) {
-            callback(null, { title: 'model' });
-        },
-        render: function () {},
-        resumeFind: function () {
-            resumed = true;
-        }
-    });
-
-    route.present(target, options());
-
-    assert.strictEqual(resumed, false);
+    assert.strictEqual(watched, false);
 });

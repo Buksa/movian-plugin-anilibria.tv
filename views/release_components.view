@@ -21,28 +21,6 @@
   });
 }
 
-#define RELEASE_RESUME_BUTTON() {
-  widget(container_z, {
-    hidden: !$self.model.metadata.resumeCandidate.available;
-    height: 2.6em;
-    focusable: 0.65;
-    onEvent(activate,
-      navOpen($self.model.metadata.resumeCandidate.url));
-    widget(quad, {
-      color: [0.18, 0.38, 0.7];
-      alpha: select(isFocused(), 0.65, 0.32);
-    });
-    widget(label, {
-      caption: "Продолжить: " +
-        $self.model.metadata.resumeCandidate.title +
-        select($self.model.metadata.resumeCandidate.progress > 0,
-          " · " + $self.model.metadata.resumeCandidate.progress + "%", "");
-      padding: [0.25em, 0.4em];
-      sizeScale: 0.76;
-      maxlines: 1;
-    });
-  });
-}
 
 #define RELEASE_TAB_BUTTON(ID, CAPTION, COUNT, AVAILABLE) {
   widget(container_z, {

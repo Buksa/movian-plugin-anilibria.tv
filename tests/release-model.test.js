@@ -85,12 +85,10 @@ test('builds safe empty collections and page counts', function () {
     assert.strictEqual(model.metadata.initialTab, 'episodes');
     assert.strictEqual(model.metadata.activeTab, 'episodes');
     assert.strictEqual(model.metadata.showOverview, false);
-    assert.deepStrictEqual(model.metadata.resumeCandidate, {
-        available: false,
-        url: '',
-        title: '',
-        progress: 0
-    });
+    assert.strictEqual(
+        Object.prototype.hasOwnProperty.call(model.metadata, 'resumeCandidate'),
+        false
+    );
     assert.deepStrictEqual(model.metadata.torrentGroups, []);
     assert.deepStrictEqual(model.metadata.franchise.releases, []);
     assert.deepStrictEqual(model.episodes, []);
@@ -148,6 +146,21 @@ test('separates episode display fields from confident TV metadata identity', fun
             { url: 'hls:https://cdn/720.m3u8', title: '720p' }
         ]
     });
+});
+
+test('keeps franchise tab when playable episodes are absent', function () {
+    var release = baseRelease();
+    release.episodes = [{ ordinal: 1, name: 'No source' }];
+    release.torrents = [{ magnet: 'fallback', label: 'Fallback torrent' }];
+
+    var model = releaseModel.build(release, franchiseData(), 'logo.png', 7);
+
+    assert.deepStrictEqual(model.episodes, []);
+    assert.strictEqual(model.metadata.episodeCount, 0);
+    assert.strictEqual(model.metadata.franchiseCount, 2);
+    assert.strictEqual(model.metadata.torrentCount, 1);
+    assert.strictEqual(model.metadata.initialTab, 'franchise');
+    assert.strictEqual(model.metadata.activeTab, 'franchise');
 });
 
 test('does not bind a TV episode when season identity is ambiguous', function () {

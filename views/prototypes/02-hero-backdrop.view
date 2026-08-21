@@ -114,8 +114,6 @@ widget(container_z, {
       });
     });
 
-    // Resume widget
-    RELEASE_RESUME_BUTTON();
 
     // Episodes — horizontal scroll cards
     widget(label, {

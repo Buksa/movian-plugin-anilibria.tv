@@ -20,12 +20,6 @@
     "franchiseCount": 0,
     "torrentCount": 0,
     "torrentGroups": [],
-    "resumeCandidate": {
-      "available": false,
-      "url": "",
-      "title": "",
-      "progress": 0
-    },
     "franchise": {
       "title": "Франшиза",
       "info": null,

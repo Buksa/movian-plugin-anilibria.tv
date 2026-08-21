@@ -83,8 +83,6 @@ widget(container_z, {
           // Opens the full release overview.
           RELEASE_OVERVIEW_BUTTON();
 
-          // Resumes the last watched episode when available.
-          RELEASE_RESUME_BUTTON();
         });
 
         // Active content panel.

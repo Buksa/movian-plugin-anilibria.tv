@@ -144,8 +144,6 @@ widget(container_z, {
           color: 0.9;
         });
 
-        // Resume widget
-        RELEASE_RESUME_BUTTON();
       });
 
       // Right column: episodes

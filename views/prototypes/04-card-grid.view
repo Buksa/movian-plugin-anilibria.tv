@@ -117,8 +117,6 @@ widget(container_z, {
         color: 0.65;
       });
 
-      RELEASE_RESUME_BUTTON();
-
       widget(label, {
         caption: $self.model.metadata.description;
         size: 0.85em;

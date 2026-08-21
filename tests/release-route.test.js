@@ -1,5 +1,5 @@
 var assert = require('assert');
-var presenter = require('../lib/release-page-presenter');
+var releaseRoute = require('../lib/release-route');
 
 function test(name, fn) {
     try {
@@ -22,13 +22,14 @@ function page() {
     };
 }
 
-function options(overrides) {
-    var value = {
-        id: 7,
-        logo: 'logo.png',
-        viewPath: 'views/release.view',
-        releaseUrl: 'anilibria:release:7',
-        resumeConfig: { enabled: true, autoResume: false, findNext: true, delay: 1500 },
+function route(overrides) {
+    var dependencies = {
+        resumeConfig: {
+            enabled: true,
+            autoResume: false,
+            findNext: true,
+            delay: 1500
+        },
         load: function (id, logo, callback) {
             callback(null, { title: 'model' });
         },
@@ -38,18 +39,34 @@ function options(overrides) {
         },
         resumeFind: function () {}
     };
+
     Object.keys(overrides || {}).forEach(function (key) {
-        value[key] = overrides[key];
+        dependencies[key] = overrides[key];
     });
-    return value;
+
+    return releaseRoute.create(dependencies);
+}
+
+function options() {
+    return {
+        id: 7,
+        logo: 'logo.png',
+        viewPath: 'views/release.view',
+        releaseUrl: 'anilibria:release:7'
+    };
 }
 
 test('owns release page initialization, render, and resume order', function () {
     var target = page();
     var events = [];
     var resumeArgs;
-
-    presenter.present(target, options({
+    var route = releaseRoute.create({
+        resumeConfig: {
+            enabled: true,
+            autoResume: false,
+            findNext: true,
+            delay: 1500
+        },
         load: function (id, logo, callback) {
             events.push('load:' + id + ':' + logo);
             assert.strictEqual(target.loading, true);
@@ -66,7 +83,9 @@ test('owns release page initialization, render, and resume order', function () {
             events.push('resume');
             resumeArgs = { page: page, items: items, config: config };
         }
-    }));
+    });
+
+    route.present(target, options());
 
     assert.deepStrictEqual(events, ['load:7:logo.png', 'render', 'resume']);
     assert.strictEqual(target.loading, false);
@@ -82,8 +101,7 @@ test('publishes a route error and stops the ordering chain', function () {
     var target = page();
     var rendered = false;
     var resumed = false;
-
-    presenter.present(target, options({
+    var route = releaseRoute.create({
         load: function (id, logo, callback) {
             callback(new Error('network down'));
         },
@@ -93,10 +111,13 @@ test('publishes a route error and stops the ordering chain', function () {
         resumeFind: function () {
             resumed = true;
         }
-    }));
+    });
+
+    route.present(target, options());
 
     assert.strictEqual(target.loading, false);
     assert.strictEqual(target.metadata.title, 'Не удалось загрузить релиз');
+    assert.strictEqual(target.metadata.retryUrl, 'anilibria:release:7');
     assert.strictEqual(target.model.error, 'Ошибка загрузки релиза: network down');
     assert.strictEqual(rendered, false);
     assert.strictEqual(resumed, false);
@@ -105,13 +126,18 @@ test('publishes a route error and stops the ordering chain', function () {
 test('does not schedule resume when disabled', function () {
     var target = page();
     var resumed = false;
-
-    presenter.present(target, options({
+    var route = releaseRoute.create({
         resumeConfig: { enabled: false },
+        load: function (id, logo, callback) {
+            callback(null, { title: 'model' });
+        },
+        render: function () {},
         resumeFind: function () {
             resumed = true;
         }
-    }));
+    });
+
+    route.present(target, options());
 
     assert.strictEqual(resumed, false);
 });

@@ -11,8 +11,7 @@ var fmt = require('./lib/formatters');
 var ui = require('./lib/ui');
 var resume = require('./lib/resume');
 var pagination = require('./lib/pagination');
-var releaseView = require('./lib/release-view');
-var releasePresenter = require('./lib/release-page-presenter');
+var releaseRoute = require('./lib/release-route');
 var log = require('./lib/log');
 
 var plugin = JSON.parse(Plugin.manifest);
@@ -196,15 +195,11 @@ new page.Route(PREFIX + ':schedule', function (page) {
 new page.Route(PREFIX + ':release:(.*)', function (page, id) {
     var releaseUrl = PREFIX + ':release:' + id;
 
-    releasePresenter.present(page, {
+    releaseRoute.present(page, {
         id: id,
         logo: LOGO,
         viewPath: RELEASE_VIEW,
-        releaseUrl: releaseUrl,
-        load: releaseView.load,
-        render: ui.renderRelease,
-        resumeFind: resume.find,
-        resumeConfig: resume.config
+        releaseUrl: releaseUrl
     });
 });
 

@@ -101,6 +101,67 @@ test('normalizes Movian cache status without exposing the response', function ()
     });
 });
 
+test('retries a bodyless 304 once without cache', function () {
+    var payload = { data: [{ id: 8 }] };
+    var attempts = 0;
+    var http = makeHttp(function (url, options, callback) {
+        attempts++;
+        if (attempts === 1) {
+            callback(null, response(304, ''));
+            return;
+        }
+        callback(null, response(200, payload));
+    });
+    var api = loadApi(http);
+    var observed;
+
+    api.catalog(3, function (err, result) {
+        observed = { err: err, result: result };
+    });
+
+    assert.strictEqual(observed.err, null);
+    assert.deepStrictEqual(observed.result, {
+        data: payload,
+        cacheHit: false
+    });
+    assert.strictEqual(http.calls.length, 2);
+    assert.strictEqual(http.calls[0].options.noFail, true);
+    assert.strictEqual(http.calls[1].options.noFail, true);
+    assert.strictEqual(http.calls[1].options.caching, undefined);
+});
+
+test('fails explicitly when the uncached retry is also 304', function () {
+    var http = makeHttp(function (url, options, callback) {
+        callback(null, response(304, ''));
+    });
+    var api = loadApi(http);
+    var observed;
+
+    api.release(12, function (err, result) {
+        observed = { err: err, result: result };
+    });
+
+    assert.strictEqual(observed.result, undefined);
+    assert.strictEqual(observed.err.message, 'HTTP 304 after uncached retry');
+    assert.strictEqual(http.calls.length, 2);
+    assert.strictEqual(http.calls[1].options.caching, undefined);
+});
+
+test('fails explicitly when HTTP returns no response', function () {
+    var http = makeHttp(function (url, options, callback) {
+        callback(null, undefined);
+    });
+    var api = loadApi(http);
+    var observed;
+
+    api.schedule(function (err, result) {
+        observed = { err: err, result: result };
+    });
+
+    assert.strictEqual(observed.result, undefined);
+    assert.strictEqual(observed.err.message, 'HTTP request returned no response');
+});
+
 test('returns HTTP and JSON failures through the endpoint seam', function () {
     var httpStatus = makeHttp(function (url, options, callback) {
         callback(null, response(503, '{}'));

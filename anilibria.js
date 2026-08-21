@@ -13,6 +13,7 @@ var resume = require('./lib/resume');
 var pagination = require('./lib/pagination');
 var releaseView = require('./lib/release-view');
 var releasePresenter = require('./lib/release-page-presenter');
+var log = require('./lib/log');
 
 var plugin = JSON.parse(Plugin.manifest);
 var PREFIX = fmt.PREFIX;
@@ -38,6 +39,12 @@ settings.createInfo('info', LOGO,
 );
 
 settings.createDivider('Общие:');
+function setDebug(value) {
+    service.debug = !!value;
+    log.setDebug(service.debug);
+}
+
+settings.createBool('debug', 'Debug Mode', false, setDebug);
 
 settings.createBool('cacheEnabled', 'Включить кеширование', true, function (v) {
     api.setCacheEnabled(v);

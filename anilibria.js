@@ -9,8 +9,8 @@ var settings = require('movian/settings');
 var api = require('./lib/api');
 var fmt = require('./lib/formatters');
 var ui = require('./lib/ui');
+var catalogPageModule = require('./lib/catalog-page');
 var watchedEpisode = require('./lib/watched-episode');
-var pagination = require('./lib/pagination');
 var releaseRoute = require('./lib/release-route');
 var log = require('./lib/log');
 
@@ -20,6 +20,30 @@ var LOGO = Plugin.path + plugin.icon;
 var PAGE_SIZE = 25;
 var RELEASE_VIEW = Plugin.path + 'views/release.view';
 var CATALOG_VIEW = Plugin.path + 'views/grid_video_switcher.view';
+
+var catalogPage = catalogPageModule.create({
+    sources: {
+        catalog: function (pageNumber, callback) {
+            api.catalog(pageNumber, callback);
+        },
+        search: function (query, pageNumber, callback) {
+            api.search(query, pageNumber, callback);
+        },
+        schedule: function (callback) {
+            api.schedule(callback);
+        }
+    },
+    effects: {
+        renderCatalog: ui.renderCatalog,
+        renderSearch: ui.renderSearch,
+        renderSchedule: ui.renderSchedule,
+        renderError: ui.renderError
+    },
+    logo: LOGO,
+    catalogView: CATALOG_VIEW,
+    pageSize: PAGE_SIZE,
+    pluginTitle: plugin.title
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Сервис (иконка в меню Movian)
@@ -85,110 +109,22 @@ watchedEpisode.createSettingsUI(settings);
 // ─────────────────────────────────────────────────────────────────────────────
 
 // === Поиск ===
-page.Searcher(plugin.title, LOGO, function (page, query) {
-    page.metadata.title = plugin.title + ' — Поиск: ' + query;
-    page.type = 'directory';
-    page.loading = true;
-    page.entries = 0;
-
-    if (!query || query.trim().length < 2) {
-        ui.renderError(page, 'Минимум 2 символа для поиска');
-        page.loading = false;
-        return;
-    }
-
-    api.search(query, 1, function (err, result) {
-        page.loading = false;
-        if (err) {
-            ui.renderError(page, 'Ошибка поиска: ' + err.message);
-            return;
-        }
-        var items = fmt.catalog(result.data);
-        ui.renderSearch(page, items);
-    });
+new page.Searcher(plugin.title, LOGO, function (page, query) {
+    catalogPage.search(page, query);
 });
 
-// === Каталог с пагинацией ===
-function setupCatalogPage(page, title) {
-    page.type = 'raw';
-    page.metadata.title = title;
-    page.metadata.icon = LOGO;
-    page.metadata.glwview = CATALOG_VIEW;
-    page.metadata.error = '';
-    page.model.contents = 'grid';
-    page.entries = 0;
-    page.loading = true;
-
-    var pager = pagination.create({
-        maxPrefetchPage: 1,
-        loadPage: function (pageNumber, callback) {
-            api.catalog(pageNumber, function (err, result) {
-                if (err) {
-                    callback(err);
-                    return;
-                }
-
-                callback(null, {
-                    items: fmt.catalog(result.data),
-                    hasMore: !!(result.data.data &&
-                        result.data.data.length >= PAGE_SIZE),
-                    cacheHit: !!result.cacheHit
-                });
-            });
-        },
-
-        onLoadStart: function () {
-            if (page.entries === 0) page.loading = true;
-        },
-
-        onLoadEnd: function () {
-            page.loading = false;
-        },
-
-        onItems: function (items) {
-            page.metadata.error = '';
-            ui.renderCatalog(page, items);
-        },
-
-        onError: function (error) {
-            page.metadata.error = 'Ошибка загрузки каталога: ' +
-                (error && error.message ? error.message : 'повторите попытку');
-        },
-
-        onHaveMore: function (hasMore) {
-            page.haveMore(hasMore);
-        }
-    });
-
-    page.asyncPaginator = pager.load;
-    pager.load();
-}
-
-// === Главная ===
+// === Главная и каталог ===
 new page.Route(PREFIX + ':start', function (page) {
-    setupCatalogPage(page, 'Anilibria');
+    catalogPage.catalog(page, 'Anilibria');
 });
 
-// === Каталог (отдельная страница) ===
 new page.Route(PREFIX + ':catalog', function (page) {
-    setupCatalogPage(page, 'Каталог');
+    catalogPage.catalog(page, 'Каталог');
 });
 
 // === Расписание ===
 new page.Route(PREFIX + ':schedule', function (page) {
-    page.type = 'directory';
-    page.metadata.title = 'Расписание';
-    page.loading = true;
-
-    api.schedule(function (err, result) {
-        page.loading = false;
-        if (err) {
-            ui.renderError(page, 'Ошибка загрузки расписания');
-            return;
-        }
-        // API returns { data: [scheduleItem, ...] }
-        ui.renderSchedule(page, result.data.data || []);
-    });
+    catalogPage.schedule(page);
 });
 
 // === Страница релиза ===

@@ -25,12 +25,11 @@ function makeHttp(endpoint) {
 function loadApi(http) {
     var originalLoad = Module._load;
     var apiPath = require.resolve('../lib/api');
-    var configPath = require.resolve('../lib/config');
+    var sessionPath = require.resolve('../lib/api-session');
     var transportPath = require.resolve('../lib/transport');
     var inspector = function () {};
-
     delete require.cache[apiPath];
-    delete require.cache[configPath];
+    delete require.cache[sessionPath];
     delete require.cache[transportPath];
 
     Module._load = function (request) {

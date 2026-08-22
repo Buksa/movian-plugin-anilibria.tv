@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "movian-lsp": {
+      "command": "movian-lsp",
+      "args": ["--stdio"],
+      "fileTypes": [".view", ".js"],
+      "rootMarkers": ["plugin.json"]
+    }
+  }
+}

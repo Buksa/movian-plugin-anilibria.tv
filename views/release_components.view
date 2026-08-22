@@ -33,10 +33,12 @@
       $self.model.metadata.activeTab = ID;
     });
 
+    // Original blue palette; focus raises brightness without changing hue.
     widget(quad, {
-      color: [0.16, 0.28, 0.52];
-      alpha: select(isFocused(), 0.72,
-        select($self.model.metadata.activeTab == ID, 0.42, 0.08));
+      color: select(isFocused(),
+        [0.22, 0.36, 0.62], [0.16, 0.28, 0.52]);
+      alpha: select(isFocused(), 0.82,
+        select($self.model.metadata.activeTab == ID, 0.46, 0.08));
     });
     widget(container_x, {
       padding: [0.25em, 0.45em];
@@ -109,10 +111,10 @@
     focus("release-tab-episodes");
   }, $self.playback.episode == 1);
 
-  // Episode row background and focus highlight.
+  // Episode selection keeps the original blue tone, only slightly brighter.
   widget(quad, {
-    color: [0.16, 0.23, 0.4];
-    alpha: select(isFocused(), 0.34, 0.1);
+    color: select(isFocused(), [0.22, 0.32, 0.52], [0.16, 0.23, 0.4]);
+    alpha: select(isFocused(), 0.52, 0.1);
   });
 
   // Horizontal row layout: thumbnail on the left, details on the right.
@@ -233,10 +235,12 @@
   focusable: select($self.active, 0.0, 0.75);
   onEvent(activate, navOpen($self.url), !$self.active);
 
+  // Franchise focus follows the same blue palette as the tab and Episode row.
   widget(quad, {
-    color: [0.14, 0.2, 0.34];
-    alpha: select($self.active, 0.18,
-      0.12 + 0.28 * iir(isNavFocused() + isHovered(), 4));
+    color: select(isNavFocused(), [0.22, 0.32, 0.52], [0.14, 0.2, 0.34]);
+    alpha: select(isNavFocused(), 0.55,
+      select($self.active, 0.18,
+        0.12 + 0.28 * iir(isNavFocused() + isHovered(), 4)));
   });
   widget(container_y, {
     padding: 0.35em;
@@ -301,10 +305,13 @@
   focusable: 0.75;
   onEvent(activate, navOpen($self.url));
 
+  // Torrent selection uses the original blue highlight, not a new gray palette.
   widget(quad, {
-    color: select($self.noSeeders,
-      [0.45, 0.22, 0.08], [0.13, 0.2, 0.34]);
-    alpha: select(isFocused(), 0.42, 0.14);
+    color: select(isFocused(),
+      [0.22, 0.32, 0.52],
+      select($self.noSeeders,
+        [0.45, 0.22, 0.08], [0.13, 0.2, 0.34]));
+    alpha: select(isFocused(), 0.55, 0.14);
   });
   widget(container_y, {
     padding: [0.25em, 0.4em];

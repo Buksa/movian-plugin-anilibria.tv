@@ -18,10 +18,10 @@ multiopt($view.stylePath,
          $clone.settings,
          "Стиль каталога",
          $self.persistent.gridStyle,
+         makeUri("По умолчанию", "skin://pages/grid.view"),
          makeUri("Минимальный", "grid_video_content_minimal.view"),
          makeUri("Оптимальный", "grid_video_content_optimal.view"),
-         makeUri("Netflix", "grid_video_content_netflix.view"),
-         makeUri("По умолчанию", "skin://pages/grid.view")
+         makeUri("Netflix", "grid_video_content_netflix.view")
 );
 
 $view.overlay = translate($clone.itemMenu,

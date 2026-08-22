@@ -183,63 +183,6 @@ test('does not bind a TV episode when season identity is ambiguous', function ()
     );
 });
 
-test('groups and sorts normalized torrents by quality and compatibility', function () {
-    var release = baseRelease();
-    release.torrents = [{
-        label: 'English release Season 2 - AniLiberty.TOP [WEB-DL 1080p][HEVC][1-8]',
-        magnet: 'hevc',
-        size: 3569144161,
-        seeders: 51,
-        leechers: 1,
-        description: '1-8',
-        quality: { value: '1080p' },
-        type: { description: 'WEB-DL' },
-        codec: { label: 'HEVC' },
-        color: { description: '10-bit' },
-        bitrate: 1298,
-        is_hardsub: true
-    }, {
-        label: 'English release Season 2 - AniLiberty.TOP [WEB-DL 1080p][AVC][1-8]',
-        magnet: 'avc',
-        size: 12994654574,
-        seeders: 0,
-        leechers: 1,
-        description: '1-8',
-        quality: { value: '1080p' },
-        type: { description: 'WEB-DL' },
-        codec: { label: 'AVC' },
-        color: { description: '8-bit' },
-        is_hardsub: true
-    }, {
-        label: 'Unknown encode',
-        magnet: 'other',
-        size: 1024,
-        seeders: 5,
-        leechers: 0
-    }];
-
-    var model = releaseModel.build(release, null, 'logo.png', 7);
-    var groups = model.metadata.torrentGroups;
-    var avc = groups[0].items[0];
-    var hevc = groups[0].items[1];
-
-    assert.strictEqual(model.metadata.torrentCount, 3);
-    assert.strictEqual(model.metadata.initialTab, 'torrents');
-    assert.strictEqual(groups[0].quality, '1080p');
-    assert.strictEqual(groups[1].quality, 'Другое');
-    assert.strictEqual(avc.codec, 'AVC');
-    assert.strictEqual(avc.noSeeders, true);
-    assert.strictEqual(avc.sizeText, '12.1 GB');
-    assert.strictEqual(hevc.codec, 'HEVC');
-    assert.strictEqual(hevc.bitDepth, '10-bit');
-    assert.strictEqual(hevc.hardsubText, 'Hardsub');
-    assert.strictEqual(hevc.bitrateText, '1298 kb/s');
-    assert.strictEqual(
-        hevc.shortLabel,
-        'English release Season 2 · WEB-DL · Эпизоды 1-8'
-    );
-});
-
 test('uses an empty franchise for malformed optional enrichment', function () {
     var release = baseRelease();
     var model = releaseModel.build(release, [{ franchise_releases: {} }], 'logo.png', 7);

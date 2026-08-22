@@ -8,7 +8,7 @@ var settings = require('movian/settings');
 
 var api = require('./lib/api');
 var fmt = require('./lib/formatters');
-var ui = require('./lib/ui');
+var pageEffectsModule = require('./lib/page-effects');
 var catalogPageModule = require('./lib/catalog-page');
 var watchedEpisode = require('./lib/watched-episode');
 var releaseRoute = require('./lib/release-route');
@@ -21,6 +21,7 @@ var PAGE_SIZE = 25;
 var RELEASE_VIEW = Plugin.path + 'views/release.view';
 var CATALOG_VIEW = Plugin.path + 'views/grid_video_switcher.view';
 
+var pageEffects = pageEffectsModule.create();
 var catalogPage = catalogPageModule.create({
     sources: {
         catalog: function (pageNumber, callback) {
@@ -34,10 +35,10 @@ var catalogPage = catalogPageModule.create({
         }
     },
     effects: {
-        renderCatalog: ui.renderCatalog,
-        renderSearch: ui.renderSearch,
-        renderSchedule: ui.renderSchedule,
-        renderError: ui.renderError
+        catalog: pageEffects.catalog,
+        search: pageEffects.search,
+        schedule: pageEffects.schedule,
+        error: pageEffects.error
     },
     logo: LOGO,
     catalogView: CATALOG_VIEW,

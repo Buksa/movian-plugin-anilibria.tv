@@ -41,7 +41,7 @@ test('owns release page initialization, render, and watched scan order', functio
             assert.strictEqual(target.loading, true);
             callback(null, { title: 'model' });
         },
-        render: function (page, model, viewPath, releaseUrl) {
+        release: function (page, model, viewPath, releaseUrl) {
             events.push('render');
             assert.strictEqual(page.metadata.glwview, viewPath);
             assert.strictEqual(page.metadata.retryUrl, releaseUrl);
@@ -69,7 +69,7 @@ test('publishes a route error and stops the ordering chain', function () {
         load: function (id, logo, callback) {
             callback(new Error('network down'));
         },
-        render: function () {
+        release: function () {
             rendered = true;
         },
         watchedScan: function () {

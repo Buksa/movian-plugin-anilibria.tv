@@ -38,10 +38,10 @@ function dependencies(overrides) {
             }
         },
         effects: {
-            renderCatalog: function () {},
-            renderSearch: function () {},
-            renderSchedule: function () {},
-            renderError: function () {}
+            catalog: function () {},
+            search: function () {},
+            schedule: function () {},
+            error: function () {}
         },
         formatters: {
             catalog: function (data) { return data.data || []; },
@@ -99,7 +99,7 @@ test('owns catalog page lifecycle and pagination state', function () {
             }
         },
         effects: {
-            renderCatalog: function (page, items) {
+            catalog: function (page, items) {
                 rendered = items;
             }
         }
@@ -156,7 +156,7 @@ test('owns search validation and successful projection', function () {
             catalog: function (data) { return data.data; }
         },
         effects: {
-            renderSearch: function (page, items) {
+            search: function (page, items) {
                 rendered = items;
                 page.entries += items.length;
             }
@@ -191,10 +191,10 @@ test('keeps search empty validation and schedule lifecycle policy', function () 
             schedule: function (data) { return data; }
         },
         effects: {
-            renderError: function (page, message) {
+            error: function (page, message) {
                 errors.push(message);
             },
-            renderSchedule: function (page, days) {
+            schedule: function (page, days) {
                 scheduled = days;
             }
         }

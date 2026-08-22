@@ -1,5 +1,5 @@
 var assert = require('assert');
-var ui = require('../lib/ui');
+var pageEffects = require('../lib/page-effects');
 
 function test(name, fn) {
     try {
@@ -69,7 +69,7 @@ test('projects collections to a raw page while keeping nodes episode-only', func
         }]
     };
 
-    var items = ui.renderRelease(
+    var items = pageEffects.release(
         page,
         model,
         '/plugin/views/release.view',
@@ -104,7 +104,7 @@ test('keeps AniLibria episode data when external metadata binding throws', funct
         return item;
     };
 
-    ui.renderRelease(page, {
+    pageEffects.release(page, {
         metadata: { title: 'Release' },
         episodes: [{
             url: 'videoparams:{}',
@@ -120,4 +120,66 @@ test('keeps AniLibria episode data when external metadata binding throws', funct
 
     assert.strictEqual(page.items.length, 1);
     assert.strictEqual(page.items[0].root.display.title, 'Эпизод 1');
+});
+test('keeps typed operations independent from episode node implementation', function () {
+    var page = fakePage();
+    page.entries = 0;
+    var renderedEpisodes;
+    var episodeNode = {
+        render: function (target, episodes) {
+            renderedEpisodes = episodes;
+            target.appendItem('episode-url', 'video', { title: 'Episode' });
+            return ['projected-episode'];
+        }
+    };
+    var effects = pageEffects.create({ episodeNode: episodeNode });
+
+    var result = effects.release(page, {
+        metadata: { title: 'Release' },
+        episodes: [{ id: 1 }]
+    }, '/release.view', 'anilibria:release:1');
+
+    assert.deepStrictEqual(renderedEpisodes, [{ id: 1 }]);
+    assert.deepStrictEqual(result, ['projected-episode']);
+    assert.strictEqual(page.items[0].root.url, 'episode-url');
+    assert.strictEqual(page.metadata.glwview, '/release.view');
+    assert.strictEqual(page.loading, false);
+});
+
+test('projects catalog, search, schedule, and error page operations', function () {
+    var catalogPage = fakePage();
+    var searchPage = fakePage();
+    searchPage.entries = 0;
+    var schedulePage = fakePage();
+    var errorPage = fakePage();
+    var effects = pageEffects.create();
+
+    effects.catalog(catalogPage, [{
+        url: 'anilibria:release:1',
+        type: 'video',
+        metadata: { title: 'Catalog release' }
+    }]);
+    effects.search(searchPage, [{
+        url: 'anilibria:release:2',
+        type: 'video',
+        metadata: { title: 'Search release' }
+    }]);
+    effects.schedule(schedulePage, [{
+        id: 3,
+        name: { main: 'Schedule release' }
+    }]);
+    effects.error(errorPage, 'network down');
+
+    assert.strictEqual(catalogPage.items.length, 1);
+    assert.strictEqual(catalogPage.items[0].root.metadata.title, 'Catalog release');
+    assert.strictEqual(searchPage.items.length, 1);
+    assert.strictEqual(searchPage.entries, 1);
+    assert.strictEqual(schedulePage.items.length, 2);
+    assert.strictEqual(schedulePage.items[0].root.type, 'separator');
+    assert.strictEqual(schedulePage.items[1].root.type, 'video');
+    assert.strictEqual(errorPage.items.length, 2);
+    assert.strictEqual(
+        errorPage.items[1].root.metadata.title.toRichString(),
+        'network down'
+    );
 });

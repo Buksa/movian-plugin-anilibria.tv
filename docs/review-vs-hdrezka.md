@@ -74,7 +74,7 @@ Two problems:
 
 **Fix in `anilibria.js`:**
 ```javascript
-ui.renderSchedule(page, data.data || []);
+pageEffects.schedule(page, data.data || []);
 ```
 
 **Fix in `lib/formatters.js`:**

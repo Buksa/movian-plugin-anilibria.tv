@@ -26,8 +26,8 @@ function baseOptions() {
             preview: 'preview.jpg'
         },
         seriesIdentity: { title: 'English title', season: 2 },
-        assets: {
-            episodeImageSet: function (preview) {
+        imageSource: {
+            episode: function (preview) {
                 return 'preview:' + preview;
             }
         },

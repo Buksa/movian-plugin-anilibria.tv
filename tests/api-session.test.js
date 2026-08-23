@@ -17,6 +17,7 @@ test('returns copy-on-read snapshots and validates session setters', function ()
 
     assert.strictEqual(initial.baseUrl, 'https://api.anilibria.app/api/v1');
     assert.strictEqual(initial.cacheEnabled, true);
+
     assert.strictEqual(session.setBaseUrl(' https://manual.example/api/v1/ '), true);
     assert.strictEqual(session.setUserAgent('  Test Agent  '), true);
     assert.strictEqual(session.setCookie('clearance'), true);
@@ -33,6 +34,49 @@ test('returns copy-on-read snapshots and validates session setters', function ()
     assert.strictEqual(session.setBaseUrl('not-a-url'), false);
     assert.strictEqual(session.snapshot().baseUrl, 'https://manual.example/api/v1');
     assert.strictEqual(session.setUserAgent('   '), false);
+});
+test('refreshes a DNS mirror without losing URL state on failure', function () {
+    var resolver = {
+        resolve: function (callback) {
+            callback(null, 'https://mirror.example/api/v1');
+        }
+    };
+    var session = sessionModule.create({ resolver: resolver });
+    var observed;
+
+    assert.strictEqual(session.snapshot().manualUrl, false);
+    assert.strictEqual(session.setBaseUrl('https://manual.example/api/v1'), true);
+    assert.strictEqual(session.snapshot().manualUrl, true);
+
+    session.refreshConfig(function (err, result) {
+        observed = { err: err, result: result };
+    });
+
+    assert.strictEqual(observed.err, null);
+    assert.deepStrictEqual(observed.result, {
+        url: 'https://mirror.example/api/v1',
+        source: 'dns'
+    });
+    assert.strictEqual(session.snapshot().baseUrl,
+        'https://mirror.example/api/v1');
+    assert.strictEqual(session.snapshot().manualUrl, false);
+
+    var failed = sessionModule.create({
+        resolver: {
+            resolve: function (callback) {
+                callback(new Error('DNS unavailable'));
+            }
+        }
+    });
+    failed.setBaseUrl('https://manual.example/api/v1');
+    failed.refreshConfig(function (err) {
+        observed = err;
+    });
+
+    assert.strictEqual(observed.message, 'DNS unavailable');
+    assert.strictEqual(failed.snapshot().baseUrl,
+        'https://manual.example/api/v1');
+    assert.strictEqual(failed.snapshot().manualUrl, false);
 });
 
 test('installs one inspector that reads current session state', function () {

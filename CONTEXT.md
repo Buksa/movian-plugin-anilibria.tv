@@ -23,3 +23,11 @@ _Avoid_: carousel, rail
 **Watched episode**:
 An episode with recorded playback history, including play count or a saved position.
 _Avoid_: completed item
+
+**Plugin setting**:
+A user-controlled preference or action that changes API access or playback behavior through the plugin settings surface.
+_Avoid_: configuration, option
+
+**API mirror**:
+An alternate AniLibria API base URL selected by DNS discovery or explicitly supplied by the user.
+_Avoid_: endpoint, server

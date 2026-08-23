@@ -187,8 +187,8 @@ test('orchestrates page scan after the configured delay', function () {
 
 test('does not schedule a scan when the policy is disabled', function () {
     var scheduled = false;
-    var wasEnabled = watchedEpisode.config.enabled;
-    watchedEpisode.config.enabled = false;
+    var previous = watchedEpisode.snapshotConfig();
+    watchedEpisode.configure({ enabled: false });
 
     watchedEpisode.scan({}, [], {
         schedule: function () {
@@ -196,6 +196,29 @@ test('does not schedule a scan when the policy is disabled', function () {
         }
     });
 
-    watchedEpisode.config.enabled = wasEnabled;
+    watchedEpisode.configure(previous);
     assert.strictEqual(scheduled, false);
+});
+
+test('owns watched configuration normalization behind configure', function () {
+    watchedEpisode.configure({
+        enabled: 1,
+        autoResume: 0,
+        findNext: '',
+        delay: 99999
+    });
+
+    assert.deepStrictEqual(watchedEpisode.snapshotConfig(), {
+        enabled: true,
+        autoResume: false,
+        findNext: false,
+        delay: 5000
+    });
+
+    watchedEpisode.configure({
+        enabled: true,
+        autoResume: false,
+        findNext: true,
+        delay: 1500
+    });
 });

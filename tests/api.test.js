@@ -22,7 +22,7 @@ function makeHttp(endpoint) {
     };
 }
 
-function loadApi(http) {
+function loadApi(http, fakeSession) {
     var originalLoad = Module._load;
     var apiPath = require.resolve('../lib/api');
     var sessionPath = require.resolve('../lib/api-session');
@@ -34,6 +34,7 @@ function loadApi(http) {
 
     Module._load = function (request) {
         if (request === 'movian/http') return http;
+        if (request === './api-session' && fakeSession) return fakeSession;
         if (request === 'native/io') {
             return { httpInspectorCreate: inspector };
         }
@@ -224,4 +225,33 @@ test('manual base URL skips mirror discovery', function () {
     });
     assert.strictEqual(http.calls.length, 1);
     assert.ok(http.calls[0].url.indexOf('https://manual.example/api/v1/') === 0);
+});
+
+test('delegates mirror refresh through the API facade', function () {
+    var refreshCalled = false;
+    var fakeSession = {
+        snapshot: function () { return { headers: {}, cacheEnabled: true }; },
+        installInspector: function () {},
+        refreshConfig: function (callback) {
+            refreshCalled = true;
+            callback(null, { url: 'https://mirror.example/api/v1', source: 'dns' });
+        },
+        setBaseUrl: function () {},
+        setUserAgent: function () {},
+        setCookie: function () {},
+        setCacheEnabled: function () {}
+    };
+    var api = loadApi(makeHttp(function () {}), fakeSession);
+    var observed;
+
+    api.refreshConfig(function (err, result) {
+        observed = { err: err, result: result };
+    });
+
+    assert.strictEqual(refreshCalled, true);
+    assert.strictEqual(observed.err, null);
+    assert.deepStrictEqual(observed.result, {
+        url: 'https://mirror.example/api/v1',
+        source: 'dns'
+    });
 });

@@ -94,20 +94,22 @@ widget(container_z, {
 
           // Secondary navigation tabs.
           widget(container_x, {
-            hidden: !$self.model.metadata.hasSecondaryTabs;
+            hidden: !($self.model.metadata.sections.franchise.available ||
+              $self.model.metadata.sections.torrents.available);
             height: 2.4em;
             spacing: 0.45em;
             // Episodes tab.
             RELEASE_TAB_BUTTON("episodes", "СЕРИИ",
-              $self.model.metadata.episodeCount, true);
+              $self.model.metadata.sections.episodes.count,
+              true);
             // Franchise tab.
             RELEASE_TAB_BUTTON("franchise", "ФРАНШИЗА",
-              $self.model.metadata.franchiseCount,
-              $self.model.metadata.franchiseCount > 0);
+              $self.model.metadata.sections.franchise.count,
+              $self.model.metadata.sections.franchise.available);
             // Torrents tab.
             RELEASE_TAB_BUTTON("torrents", "ТОРРЕНТЫ",
-              $self.model.metadata.torrentCount,
-              $self.model.metadata.torrentCount > 0);
+              $self.model.metadata.sections.torrents.count,
+              $self.model.metadata.sections.torrents.available);
             // Flexible spacer after the tabs.
             widget(dummy, { });
           });
@@ -133,14 +135,14 @@ widget(container_z, {
                 widget(dummy, { });
                 // Number of available episodes.
                 widget(label, {
-                  caption: $self.model.metadata.episodeCount;
+                  caption: $self.model.metadata.sections.episodes.count;
                   sizeScale: 0.76;
                   color: 0.58;
                 });
               });
               // Empty-state message when no episodes are published.
               widget(container_z, {
-                hidden: $self.model.metadata.episodeCount > 0;
+                hidden: $self.model.metadata.sections.episodes.count > 0;
                 // Empty-state label.
                 widget(label, {
                   caption: "Серии пока не опубликованы";
@@ -151,7 +153,7 @@ widget(container_z, {
               });
               // Scrollable episode list and its scrollbar.
               widget(container_x, {
-                hidden: !($self.model.metadata.episodeCount > 0);
+                hidden: !($self.model.metadata.sections.episodes.count > 0);
                 // Keyboard-navigable episode list.
                 widget(list_y, {
                   .id = "release-episodes";

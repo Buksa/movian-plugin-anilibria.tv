@@ -78,10 +78,11 @@ test('builds safe empty collections and page counts', function () {
     assert.strictEqual(model.metadata.description, '');
     assert.strictEqual(model.metadata.logo, 'logo.png');
     assert.strictEqual(model.metadata.poster, 'logo.png');
-    assert.strictEqual(model.metadata.episodeCount, 0);
-    assert.strictEqual(model.metadata.franchiseCount, 0);
-    assert.strictEqual(model.metadata.torrentCount, 0);
-    assert.strictEqual(model.metadata.hasSecondaryTabs, false);
+    assert.deepStrictEqual(model.metadata.sections, {
+        episodes: { count: 0, available: true },
+        franchise: { count: 0, available: false },
+        torrents: { count: 0, available: false }
+    });
     assert.strictEqual(model.metadata.initialTab, 'episodes');
     assert.strictEqual(model.metadata.activeTab, 'episodes');
     assert.strictEqual(model.metadata.showOverview, false);
@@ -115,9 +116,9 @@ test('separates episode display fields from confident TV metadata identity', fun
     var params = JSON.parse(episode.url.substring('videoparams:'.length));
     var preview = JSON.parse(episode.display.preview.substring('imageset:'.length));
 
-    assert.strictEqual(model.metadata.episodeCount, 1);
-    assert.strictEqual(model.metadata.franchiseCount, 2);
-    assert.strictEqual(model.metadata.hasSecondaryTabs, true);
+    assert.strictEqual(model.metadata.sections.episodes.count, 1);
+    assert.strictEqual(model.metadata.sections.franchise.count, 2);
+    assert.strictEqual(model.metadata.sections.franchise.available, true);
     assert.strictEqual(model.metadata.franchise.releases[1].active, true);
     assert.strictEqual(
         model.metadata.franchise.releases[1].metadata.title,
@@ -156,9 +157,9 @@ test('keeps franchise tab when playable episodes are absent', function () {
     var model = releaseModel.build(release, franchiseData(), 'logo.png', 7);
 
     assert.deepStrictEqual(model.episodes, []);
-    assert.strictEqual(model.metadata.episodeCount, 0);
-    assert.strictEqual(model.metadata.franchiseCount, 2);
-    assert.strictEqual(model.metadata.torrentCount, 1);
+    assert.strictEqual(model.metadata.sections.episodes.count, 0);
+    assert.strictEqual(model.metadata.sections.franchise.count, 2);
+    assert.strictEqual(model.metadata.sections.torrents.count, 1);
     assert.strictEqual(model.metadata.initialTab, 'franchise');
     assert.strictEqual(model.metadata.activeTab, 'franchise');
 });

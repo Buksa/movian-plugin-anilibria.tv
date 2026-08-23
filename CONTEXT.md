@@ -43,3 +43,7 @@ _Avoid_: metadata fetch, decoration
 **Episode identity**:
 The stable canonical fields of an Episode used across playback, page presentation, and watched history.
 _Avoid_: playback state, external title
+
+**Release section state**:
+The available content sections and initial tab selection for a Release page.
+_Avoid_: tab widget, view mode

@@ -47,6 +47,25 @@ test('normalizes page episode and recognizes partial playback', function () {
     assert.strictEqual(watchedEpisode.hasWatchedSignal(candidate), true);
 });
 
+test('normalizes nested Episode identity separately from history state', function () {
+    var candidate = watchedEpisode.normalize({
+        identity: {
+            canonicalUrl: 'anilibria:release:7:2',
+            episode: 2,
+            title: 'Падший',
+            duration: 2369
+        },
+        playcount: 1,
+        restartpos: 45
+    });
+
+    assert.strictEqual(candidate.title, 'Падший');
+    assert.strictEqual(candidate.canonicalUrl, 'anilibria:release:7:2');
+    assert.strictEqual(candidate.duration, 2369);
+    assert.strictEqual(candidate.playcount, 1);
+    assert.strictEqual(candidate.restartpos, 45);
+});
+
 test('finds the last watched episode and the next video', function () {
     var items = [
         episode('video', 'Episode 1', 'anilibria:episode:1', 0, 0),

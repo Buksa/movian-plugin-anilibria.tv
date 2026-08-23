@@ -39,3 +39,7 @@ _Avoid_: infinite scroll, page list
 **Release enrichment**:
 The required release data combined with optional franchise context used to present a Release.
 _Avoid_: metadata fetch, decoration
+
+**Episode identity**:
+The stable canonical fields of an Episode used across playback, page presentation, and watched history.
+_Avoid_: playback state, external title

@@ -45,6 +45,12 @@ test('projects one playback contract across media and presentation', function ()
     var params = JSON.parse(item.url.substring('videoparams:'.length));
 
     assert.strictEqual(item.canonicalUrl, 'anilibria:release:7:2');
+    assert.deepStrictEqual(item.identity, {
+        canonicalUrl: 'anilibria:release:7:2',
+        episode: 2,
+        title: 'Падший',
+        duration: 2369
+    });
     assert.strictEqual(item.display.title, 'Падший');
     assert.strictEqual(item.display.durationText, '2369 sec');
     assert.strictEqual(view.title, item.display.title);

@@ -36,6 +36,12 @@ function episode() {
         url: 'videoparams:{}',
         type: 'video',
         canonicalUrl: 'anilibria:release:7:1',
+        identity: {
+            canonicalUrl: 'anilibria:release:7:1',
+            episode: 1,
+            title: 'Падший',
+            duration: 1200
+        },
         episode: 1,
         duration: 1200,
         display: {
@@ -81,6 +87,12 @@ test('roundtrips playback, display, and history through a page node', function (
     assert.strictEqual(item.root.episode, 1);
     assert.strictEqual(item.root.duration, 1200);
     assert.strictEqual(item.root.canonicalUrl, 'anilibria:release:7:1');
+    assert.deepStrictEqual(item.root.identity, {
+        canonicalUrl: 'anilibria:release:7:1',
+        episode: 1,
+        title: 'Падший',
+        duration: 1200
+    });
     assert.deepStrictEqual(item.bindings, [{
         title: 'Series',
         season: 1,
@@ -93,11 +105,21 @@ test('roundtrips playback, display, and history through a page node', function (
         url: 'videoparams:{}',
         canonicalUrl: 'anilibria:release:7:1',
         episode: 1,
+
         duration: 1200,
         playcount: 2,
         restartpos: 45,
         index: 0
     });
+});
+test('reads canonical identity before legacy projections', function () {
+    var target = page(false);
+    var item = episodeNode.render(target, [episode()])[0];
+
+    item.root.display.title = 'Legacy display';
+    item.root.playback.title = 'Legacy playback';
+
+    assert.strictEqual(episodeNode.read(item, 0).title, 'Падший');
 });
 
 test('keeps the Episode node usable when metadata binding fails', function () {

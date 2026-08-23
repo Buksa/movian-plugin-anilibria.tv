@@ -69,20 +69,22 @@ function harness(options) {
         loadPage: function (pageNumber, callback) {
             loads.push({ page: pageNumber, callback: callback });
         },
-        onLoadStart: function (pageNumber) {
-            events.starts.push(pageNumber);
-        },
-        onLoadEnd: function (reason, pageNumber) {
-            events.ends.push({ reason: reason, page: pageNumber });
-        },
-        onItems: function (items) {
-            events.items.push(items);
-        },
-        onError: function (err) {
-            events.errors.push(err.message);
-        },
-        onHaveMore: function (hasMore) {
-            events.more.push(hasMore);
+        lifecycle: {
+            start: function (pageNumber) {
+                events.starts.push(pageNumber);
+            },
+            end: function (reason, pageNumber) {
+                events.ends.push({ reason: reason, page: pageNumber });
+            },
+            items: function (items) {
+                events.items.push(items);
+            },
+            error: function (err) {
+                events.errors.push(err.message);
+            },
+            more: function (hasMore) {
+                events.more.push(hasMore);
+            }
         }
     });
 

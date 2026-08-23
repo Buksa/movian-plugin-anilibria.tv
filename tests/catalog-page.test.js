@@ -52,14 +52,14 @@ function dependencies(overrides) {
                 pagerOptions = options;
                 return {
                     load: function () {
-                        options.onLoadStart();
+                        options.lifecycle.start();
                         options.loadPage(1, function (err, result) {
-                            if (err) options.onError(err);
+                            if (err) options.lifecycle.error(err);
                             else {
-                                options.onItems(result.items);
-                                options.onHaveMore(result.hasMore);
+                                options.lifecycle.items(result.items);
+                                options.lifecycle.more(result.hasMore);
                             }
-                            options.onLoadEnd();
+                            options.lifecycle.end();
                         });
                     }
                 };

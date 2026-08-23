@@ -31,3 +31,7 @@ _Avoid_: configuration, option
 **API mirror**:
 An alternate AniLibria API base URL selected by DNS discovery or explicitly supplied by the user.
 _Avoid_: endpoint, server
+
+**Catalog pagination**:
+The ordered loading of catalog pages with cache state, availability of more pages, and user-visible loading completion.
+_Avoid_: infinite scroll, page list

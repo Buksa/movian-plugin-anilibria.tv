@@ -35,3 +35,7 @@ _Avoid_: endpoint, server
 **Catalog pagination**:
 The ordered loading of catalog pages with cache state, availability of more pages, and user-visible loading completion.
 _Avoid_: infinite scroll, page list
+
+**Release enrichment**:
+The required release data combined with optional franchise context used to present a Release.
+_Avoid_: metadata fetch, decoration

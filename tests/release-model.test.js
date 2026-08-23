@@ -79,9 +79,27 @@ test('builds safe empty collections and page counts', function () {
     assert.strictEqual(model.metadata.logo, 'logo.png');
     assert.strictEqual(model.metadata.poster, 'logo.png');
     assert.deepStrictEqual(model.metadata.sections, {
-        episodes: { count: 0, available: true },
-        franchise: { count: 0, available: false },
-        torrents: { count: 0, available: false }
+        episodes: {
+            id: 'episodes',
+            count: 0,
+            available: true,
+            focusId: 'release-tab-episodes',
+            panelId: 'release-panel-episodes'
+        },
+        franchise: {
+            id: 'franchise',
+            count: 0,
+            available: false,
+            focusId: 'release-tab-franchise',
+            panelId: 'release-panel-franchise'
+        },
+        torrents: {
+            id: 'torrents',
+            count: 0,
+            available: false,
+            focusId: 'release-tab-torrents',
+            panelId: 'release-panel-torrents'
+        }
     });
     assert.strictEqual(model.metadata.initialTab, 'episodes');
     assert.strictEqual(model.metadata.activeTab, 'episodes');
@@ -119,6 +137,10 @@ test('separates episode display fields from confident TV metadata identity', fun
     assert.strictEqual(model.metadata.sections.episodes.count, 1);
     assert.strictEqual(model.metadata.sections.franchise.count, 2);
     assert.strictEqual(model.metadata.sections.franchise.available, true);
+    assert.strictEqual(
+        model.metadata.sections.franchise.panelId,
+        'release-panel-franchise'
+    );
     assert.strictEqual(model.metadata.franchise.releases[1].active, true);
     assert.strictEqual(
         model.metadata.franchise.releases[1].metadata.title,

@@ -2,7 +2,6 @@
 // All data-bound macros consume the release model contract directly.
 #import "common.view"
 
-
 #define RELEASE_STATUS_BADGE() {
   widget(container_z, {
     hidden: !$self.model.metadata.status;
@@ -22,23 +21,24 @@
 }
 
 
-#define RELEASE_TAB_BUTTON(ID, CAPTION, COUNT, AVAILABLE) {
+#define RELEASE_TAB_BUTTON(SECTION, CAPTION) {
   widget(container_z, {
-    hidden: !AVAILABLE;
-    id: "release-tab-" + ID;
+    hidden: !SECTION.available;
+    id: SECTION.focusId;
     width: 9em;
     height: 2.4em;
     focusable: 0.45;
+    debug: isFocused();
     onEvent(activate, {
-      $self.model.metadata.activeTab = ID;
+      $self.model.metadata.activeTab = SECTION.id;
     });
 
-    // Original blue palette; focus raises brightness without changing hue.
+    // Active tab and keyboard focus use a high-contrast blue fill.
     widget(quad, {
-      color: select(isFocused(),
-        [0.22, 0.36, 0.62], [0.16, 0.28, 0.52]);
-      alpha: select(isFocused(), 0.82,
-        select($self.model.metadata.activeTab == ID, 0.46, 0.08));
+      color: select($self.model.metadata.activeTab == SECTION.id,
+        [0.20, 0.48, 0.82], [0.16, 0.28, 0.52]);
+      alpha: select(isFocused(), 0.92,
+        select($self.model.metadata.activeTab == SECTION.id, 0.88, 0.08));
     });
     widget(container_x, {
       padding: [0.25em, 0.45em];
@@ -46,12 +46,12 @@
       widget(label, {
         caption: CAPTION;
         sizeScale: 0.82;
-        color: select($self.model.metadata.activeTab == ID,
-          [0.72, 0.86, 1.0], 0.78);
+        color: select($self.model.metadata.activeTab == SECTION.id,
+          [1.0, 1.0, 1.0], 0.72);
       });
       widget(dummy, { });
       widget(container_z, {
-        hidden: !(COUNT > 0);
+        hidden: !(SECTION.count > 0);
         width: 1.5em;
         height: 1.3em;
         widget(quad, {
@@ -59,7 +59,7 @@
           alpha: 0.65;
         });
         widget(label, {
-          caption: COUNT;
+          caption: SECTION.count;
           align: center;
           sizeScale: 0.72;
         });
@@ -105,6 +105,7 @@
   height: 4.7em;
   id: select($self.playback.episode == 1,
     "release-first-episode", void);
+  debug: isFocused();
   focusable: 1.0;
   onEvent(activate, navOpen($self.url));
   onEvent(up, {
@@ -370,6 +371,7 @@
     id: "release-overview-button";
     height: 2.2em;
     focusable: 0.6;
+    debug: isFocused();
     onEvent(activate, {
       $self.model.metadata.showOverview = true;
     });

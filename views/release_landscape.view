@@ -99,17 +99,9 @@ widget(container_z, {
             height: 2.4em;
             spacing: 0.45em;
             // Episodes tab.
-            RELEASE_TAB_BUTTON("episodes", "СЕРИИ",
-              $self.model.metadata.sections.episodes.count,
-              true);
-            // Franchise tab.
-            RELEASE_TAB_BUTTON("franchise", "ФРАНШИЗА",
-              $self.model.metadata.sections.franchise.count,
-              $self.model.metadata.sections.franchise.available);
-            // Torrents tab.
-            RELEASE_TAB_BUTTON("torrents", "ТОРРЕНТЫ",
-              $self.model.metadata.sections.torrents.count,
-              $self.model.metadata.sections.torrents.available);
+            RELEASE_TAB_BUTTON($self.model.metadata.sections.episodes, "СЕРИИ");
+            RELEASE_TAB_BUTTON($self.model.metadata.sections.franchise, "ФРАНШИЗА");
+            RELEASE_TAB_BUTTON($self.model.metadata.sections.torrents, "ТОРРЕНТЫ");
             // Flexible spacer after the tabs.
             widget(dummy, { });
           });
@@ -121,7 +113,9 @@ widget(container_z, {
             // Episodes.
             // Episodes panel.
             widget(container_y, {
-              hidden: $self.model.metadata.activeTab != "episodes";
+              id: $self.model.metadata.sections.episodes.panelId;
+              hidden: $self.model.metadata.activeTab !=
+                $self.model.metadata.sections.episodes.id;
               spacing: 0.3em;
               // Episodes heading and count.
               widget(container_x, {
@@ -172,7 +166,9 @@ widget(container_z, {
             // Franchise releases.
             // Franchise releases panel.
             widget(container_y, {
-              hidden: $self.model.metadata.activeTab != "franchise";
+              id: $self.model.metadata.sections.franchise.panelId;
+              hidden: $self.model.metadata.activeTab !=
+                $self.model.metadata.sections.franchise.id;
               spacing: 0.45em;
               // Franchise title.
               widget(label, {
@@ -201,7 +197,9 @@ widget(container_z, {
             // Torrent groups panel.
             // Torrent groups.
             widget(container_y, {
-              hidden: $self.model.metadata.activeTab != "torrents";
+              id: $self.model.metadata.sections.torrents.panelId;
+              hidden: $self.model.metadata.activeTab !=
+                $self.model.metadata.sections.torrents.id;
               spacing: 0.35em;
               // // Torrent section title.
               // widget(label, {

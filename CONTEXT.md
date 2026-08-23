@@ -47,3 +47,7 @@ _Avoid_: playback state, external title
 **Release section state**:
 The available content sections and initial tab selection for a Release page.
 _Avoid_: tab widget, view mode
+
+**Release tab navigation**:
+The available focus targets and safe tab selection behavior for a Release page's content sections.
+_Avoid_: directional graph, tab widget

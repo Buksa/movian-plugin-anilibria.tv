@@ -110,6 +110,7 @@ test('binds the complete settings surface with owner defaults', function () {
     ]);
     assert.deepStrictEqual(Object.keys(settings.controls), [
         'debug',
+        'glwDebug',
         'cacheEnabled',
         'apiUrl',
         'refreshMirror',
@@ -122,6 +123,7 @@ test('binds the complete settings surface with owner defaults', function () {
         'resumeDelay'
     ]);
     assert.strictEqual(settings.controls.resumeEnabled.value, true);
+    assert.strictEqual(settings.controls.glwDebug.value, false);
     assert.strictEqual(settings.controls.autoResume.value, false);
     assert.strictEqual(settings.controls.findNext.value, true);
     assert.strictEqual(settings.controls.resumeDelay.value, 1500);

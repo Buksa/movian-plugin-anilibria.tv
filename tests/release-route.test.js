@@ -31,10 +31,10 @@ function options() {
     };
 }
 
-test('owns release page initialization, render, and watched scan order', function () {
+test('owns release page initialization, render, and continuation scan order', function () {
     var target = page();
     var events = [];
-    var watchedArgs;
+    var continuationArgs;
     var route = releaseRoute.create({
         load: function (id, logo, callback) {
             events.push('load:' + id + ':' + logo);
@@ -48,23 +48,25 @@ test('owns release page initialization, render, and watched scan order', functio
             page.loading = false;
             page.rendered = model;
         },
-        watchedScan: function (page) {
-            events.push('watched');
-            watchedArgs = { page: page };
+        continuation: {
+            scan: function (page) {
+                events.push('continuation');
+                continuationArgs = { page: page };
+            }
         }
     });
 
     route.present(target, options());
 
-    assert.deepStrictEqual(events, ['load:7:logo.png', 'render', 'watched']);
+    assert.deepStrictEqual(events, ['load:7:logo.png', 'render', 'continuation']);
     assert.strictEqual(target.loading, false);
-    assert.strictEqual(watchedArgs.page, target);
+    assert.strictEqual(continuationArgs.page, target);
 });
 
 test('publishes a route error and stops the ordering chain', function () {
     var target = page();
     var rendered = false;
-    var watched = false;
+    var continuationCalled = false;
     var route = releaseRoute.create({
         load: function (id, logo, callback) {
             callback(new Error('network down'));
@@ -72,8 +74,10 @@ test('publishes a route error and stops the ordering chain', function () {
         release: function () {
             rendered = true;
         },
-        watchedScan: function () {
-            watched = true;
+        continuation: {
+            scan: function () {
+                continuationCalled = true;
+            }
         }
     });
 
@@ -84,5 +88,5 @@ test('publishes a route error and stops the ordering chain', function () {
     assert.strictEqual(target.metadata.retryUrl, 'anilibria:release:7');
     assert.strictEqual(target.model.error, 'Ошибка загрузки релиза: network down');
     assert.strictEqual(rendered, false);
-    assert.strictEqual(watched, false);
+    assert.strictEqual(continuationCalled, false);
 });

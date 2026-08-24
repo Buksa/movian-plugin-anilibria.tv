@@ -51,3 +51,7 @@ _Avoid_: tab widget, view mode
 **Release tab navigation**:
 The available focus targets and safe tab selection behavior for a Release page's content sections.
 _Avoid_: directional graph, tab widget
+
+**Продолжение просмотра**:
+The policy that resumes a Watched episode or offers the next Episode after playback history is found.
+_Avoid_: Release loading, playback engine

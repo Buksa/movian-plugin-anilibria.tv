@@ -11,7 +11,7 @@ var fmt = require('./lib/formatters');
 var pageEffectsModule = require('./lib/page-effects');
 var catalogPageModule = require('./lib/catalog-page');
 var settingsStateModule = require('./lib/settings-state');
-var releaseRoute = require('./lib/release-route');
+var releaseRouteModule = require('./lib/release-route');
 
 var plugin = JSON.parse(Plugin.manifest);
 var PREFIX = fmt.PREFIX;
@@ -22,6 +22,8 @@ var CATALOG_VIEW = Plugin.path + 'views/grid_video_switcher.view';
 
 var pageEffects = pageEffectsModule.create();
 var settingsState = settingsStateModule.create({ api: api, service: service });
+
+var releaseRoute = releaseRouteModule.create();
 var catalogPage = catalogPageModule.create({
     sources: {
         catalog: function (pageNumber, callback) {

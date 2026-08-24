@@ -48,9 +48,9 @@ function dependencies() {
     var calls = {
         api: [],
         log: [],
-        watched: []
+        continuation: []
     };
-    var watchedConfig = {
+    var continuationConfig = {
         enabled: true,
         autoResume: false,
         findNext: true,
@@ -75,24 +75,29 @@ function dependencies() {
         e: function (message) { calls.log.push(['error', message]); }
     };
     var service = {};
-    var watched = {
+    var continuation = {
         snapshotConfig: function () {
             return {
-                enabled: watchedConfig.enabled,
-                autoResume: watchedConfig.autoResume,
-                findNext: watchedConfig.findNext,
-                delay: watchedConfig.delay
+                enabled: continuationConfig.enabled,
+                autoResume: continuationConfig.autoResume,
+                findNext: continuationConfig.findNext,
+                delay: continuationConfig.delay
             };
         },
         configure: function (patch) {
-            calls.watched.push(patch);
+            calls.continuation.push(patch);
             Object.keys(patch).forEach(function (key) {
-                watchedConfig[key] = patch[key];
+                continuationConfig[key] = patch[key];
             });
         }
     };
     return {
-        dependencies: { api: api, log: log, service: service, watched: watched },
+        dependencies: {
+            api: api,
+            log: log,
+            service: service,
+            continuation: continuation
+        },
         calls: calls,
         service: service
     };
@@ -152,7 +157,7 @@ test('normalizes callbacks and delegates state changes to owners', function () {
         ['cookie', '123'],
         ['ua', '456']
     ]);
-    assert.deepStrictEqual(target.calls.watched, [
+    assert.deepStrictEqual(target.calls.continuation, [
         { enabled: false },
         { autoResume: true },
         { findNext: false },

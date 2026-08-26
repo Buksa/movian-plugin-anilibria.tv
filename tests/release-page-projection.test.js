@@ -1,5 +1,5 @@
 var assert = require('assert');
-var releaseModel = require('../lib/release-model');
+var releaseProjection = require('../lib/release-page-projection');
 
 function test(name, fn) {
     try {
@@ -72,7 +72,12 @@ test('builds safe empty collections and page counts', function () {
     var release = baseRelease();
     release.poster = null;
 
-    var model = releaseModel.build(release, null, 'logo.png', 7);
+    var model = releaseProjection.project({
+        release: release,
+        franchiseData: null,
+        fallbackLogo: 'logo.png',
+        currentId: 7
+    });
 
     assert.strictEqual(model.metadata.title, 'Основное имя');
     assert.strictEqual(model.metadata.description, '');
@@ -129,7 +134,12 @@ test('separates episode display fields from confident TV metadata identity', fun
         }
     }];
 
-    var model = releaseModel.build(release, franchiseData(), 'logo.png', 7);
+    var model = releaseProjection.project({
+        release: release,
+        franchiseData: franchiseData(),
+        fallbackLogo: 'logo.png',
+        currentId: 7
+    });
     var episode = model.episodes[0];
     var params = JSON.parse(episode.url.substring('videoparams:'.length));
     var preview = JSON.parse(episode.display.preview.substring('imageset:'.length));
@@ -176,7 +186,12 @@ test('keeps franchise tab when playable episodes are absent', function () {
     release.episodes = [{ ordinal: 1, name: 'No source' }];
     release.torrents = [{ magnet: 'fallback', label: 'Fallback torrent' }];
 
-    var model = releaseModel.build(release, franchiseData(), 'logo.png', 7);
+    var model = releaseProjection.project({
+        release: release,
+        franchiseData: franchiseData(),
+        fallbackLogo: 'logo.png',
+        currentId: 7
+    });
 
     assert.deepStrictEqual(model.episodes, []);
     assert.strictEqual(model.metadata.sections.episodes.count, 0);
@@ -196,7 +211,12 @@ test('does not bind a TV episode when season identity is ambiguous', function ()
         hls_720: 'https://cdn/720.m3u8'
     }];
 
-    var model = releaseModel.build(release, franchiseData(), 'logo.png', 7);
+    var model = releaseProjection.project({
+        release: release,
+        franchiseData: franchiseData(),
+        fallbackLogo: 'logo.png',
+        currentId: 7
+    });
 
     assert.strictEqual(model.episodes[0].metadataBinding, null);
     assert.strictEqual(model.episodes[0].display.title, 'Эпизод 1');
@@ -208,7 +228,12 @@ test('does not bind a TV episode when season identity is ambiguous', function ()
 
 test('uses an empty franchise for malformed optional enrichment', function () {
     var release = baseRelease();
-    var model = releaseModel.build(release, [{ franchise_releases: {} }], 'logo.png', 7);
+    var model = releaseProjection.project({
+        release: release,
+        franchiseData: [{ franchise_releases: {} }],
+        fallbackLogo: 'logo.png',
+        currentId: 7
+    });
 
     assert.strictEqual(model.metadata.franchise.title, 'Франшиза');
     assert.strictEqual(model.metadata.franchise.count, 0);

@@ -11,10 +11,10 @@ function test(name, fn) {
     }
 }
 
-function loader(api, model, logs) {
+function loader(api, projection, logs) {
     return releaseView.create({
         api: api,
-        model: model,
+        projection: projection,
         log: {
             e: function (message) {
                 logs.push(message);
@@ -23,7 +23,7 @@ function loader(api, model, logs) {
     });
 }
 
-test('loads release before franchise and delegates model composition', function () {
+test('loads release before franchise and delegates page projection', function () {
     var release = {
         id: 10,
         name: { main: 'Release' },
@@ -46,30 +46,25 @@ test('loads release before franchise and delegates model composition', function 
             callback(null, { data: franchiseData });
         }
     };
-    var model = {
-        build: function (value, valueFranchise, fallbackLogo, id) {
-            events.push('build');
-            calls.push({
-                release: value,
-                franchise: valueFranchise,
-                fallbackLogo: fallbackLogo,
-                id: id
-            });
+    var projection = {
+        project: function (request) {
+            events.push('project');
+            calls.push(request);
             return expected;
         }
     };
     var observed;
 
-    loader(api, model, logs).load(10, 'logo.png', function (err, value) {
+    loader(api, projection, logs).load(10, 'logo.png', function (err, value) {
         observed = { err: err, model: value };
     });
 
-    assert.deepStrictEqual(events, ['release', 'franchise', 'build']);
+    assert.deepStrictEqual(events, ['release', 'franchise', 'project']);
     assert.deepStrictEqual(calls, [{
         release: release,
-        franchise: franchiseData,
+        franchiseData: franchiseData,
         fallbackLogo: 'logo.png',
-        id: 10
+        currentId: 10
     }]);
     assert.deepStrictEqual(logs, []);
     assert.strictEqual(observed.err, null);
@@ -89,15 +84,15 @@ test('keeps release usable when optional franchise lookup fails', function () {
             callback(failure);
         }
     };
-    var model = {
-        build: function (release, franchiseData) {
-            receivedFranchise = franchiseData;
+    var projection = {
+        project: function (request) {
+            receivedFranchise = request.franchiseData;
             return expected;
         }
     };
     var observed;
 
-    loader(api, model, logs).load(11, 'logo.png', function (err, value) {
+    loader(api, projection, logs).load(11, 'logo.png', function (err, value) {
         observed = { err: err, model: value };
     });
 
@@ -121,14 +116,14 @@ test('stops before franchise when required release fetch fails', function () {
             franchiseCalled = true;
         }
     };
-    var model = {
-        build: function () {
-            throw new Error('model should not be built');
+    var projection = {
+        project: function () {
+            throw new Error('projection should not run');
         }
     };
     var observed;
 
-    loader(api, model, logs).load(9, 'logo.png', function (err, value) {
+    loader(api, projection, logs).load(9, 'logo.png', function (err, value) {
         observed = { err: err, model: value };
     });
 
@@ -140,7 +135,7 @@ test('stops before franchise when required release fetch fails', function () {
 
 test('rejects a malformed required release payload', function () {
     var franchiseCalled = false;
-    var modelCalled = false;
+    var projectionCalled = false;
     var logs = [];
     var api = {
         release: function (id, callback) {
@@ -150,19 +145,19 @@ test('rejects a malformed required release payload', function () {
             franchiseCalled = true;
         }
     };
-    var model = {
-        build: function () {
-            modelCalled = true;
+    var projection = {
+        project: function () {
+            projectionCalled = true;
         }
     };
     var observed;
 
-    loader(api, model, logs).load(12, 'logo.png', function (err, value) {
+    loader(api, projection, logs).load(12, 'logo.png', function (err, value) {
         observed = { err: err, model: value };
     });
 
     assert.strictEqual(observed.err.message, 'Release payload is unavailable');
     assert.strictEqual(observed.model, undefined);
     assert.strictEqual(franchiseCalled, false);
-    assert.strictEqual(modelCalled, false);
+    assert.strictEqual(projectionCalled, false);
 });

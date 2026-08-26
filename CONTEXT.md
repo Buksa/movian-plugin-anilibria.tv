@@ -55,3 +55,7 @@ _Avoid_: directional graph, tab widget
 **Продолжение просмотра**:
 The policy that resumes a Watched episode or offers the next Episode after playback history is found.
 _Avoid_: Release loading, playback engine
+
+**Release page projection**:
+The policy that turns a Release payload and optional enrichment into the stable Release page model.
+_Avoid_: Release loading, GLW rendering

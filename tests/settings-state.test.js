@@ -103,6 +103,12 @@ function dependencies() {
     };
 }
 
+function resetCalls(target) {
+    target.calls.api.length = 0;
+    target.calls.log.length = 0;
+    target.calls.continuation.length = 0;
+}
+
 test('binds the complete settings surface with owner defaults', function () {
     var target = dependencies();
     var settings = fakeSettings();
@@ -138,6 +144,7 @@ test('normalizes callbacks and delegates state changes to owners', function () {
     var target = dependencies();
     var settings = fakeSettings();
     settingsState.create(target.dependencies).bind(settings);
+    resetCalls(target);
 
     settings.controls.debug.callback(1);
     settings.controls.cacheEnabled.callback(0);
@@ -169,6 +176,7 @@ test('keeps operational actions behind the settings seam', function () {
     var target = dependencies();
     var settings = fakeSettings();
     settingsState.create(target.dependencies).bind(settings);
+    resetCalls(target);
 
     settings.controls.refreshMirror.callback();
     settings.controls.testBypass.callback();
@@ -183,6 +191,7 @@ test('reports mirror refresh failures through the log owner', function () {
     };
     var settings = fakeSettings();
     settingsState.create(target.dependencies).bind(settings);
+    resetCalls(target);
 
     settings.controls.refreshMirror.callback();
 

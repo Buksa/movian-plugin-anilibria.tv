@@ -1,5 +1,5 @@
 var assert = require('assert');
-var catalogPage = require('../lib/catalog-page');
+var catalogPage = require('../lib/catalog-page-operations');
 
 function test(name, fn) {
     try {
@@ -21,6 +21,19 @@ function page() {
             this.more = value;
         }
     };
+}
+
+function renderablePage() {
+    var target = page();
+    target.items = [];
+    target.appendItem = function (url, type, metadata) {
+        this.items.push({
+            url: url,
+            type: type,
+            metadata: metadata
+        });
+    };
+    return target;
 }
 
 function dependencies(overrides) {
@@ -210,4 +223,30 @@ test('keeps search empty validation and schedule lifecycle policy', function () 
     assert.strictEqual(schedulePage.metadata.title, 'Расписание');
     assert.strictEqual(schedulePage.loading, false);
     assert.deepStrictEqual(scheduled, ['day']);
+});
+
+test('composes default API, formatter, and page effects adapters', function () {
+    var target = renderablePage();
+    var operations = catalogPage.create({
+        api: {
+            search: function (query, pageNumber, callback) {
+                assert.strictEqual(query, 'naruto');
+                assert.strictEqual(pageNumber, 1);
+                callback(null, {
+                    data: {
+                        data: [{ id: 9, name: { main: 'Release' } }]
+                    }
+                });
+            }
+        },
+        pluginTitle: 'AniLibria'
+    });
+
+    operations.search(target, 'naruto');
+
+    assert.strictEqual(target.type, 'directory');
+    assert.strictEqual(target.items.length, 1);
+    assert.strictEqual(target.items[0].url, 'anilibria:release:9');
+    assert.strictEqual(target.items[0].metadata.title, 'Release');
+    assert.strictEqual(target.entries, 1);
 });

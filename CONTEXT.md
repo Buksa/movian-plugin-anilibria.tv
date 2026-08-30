@@ -59,3 +59,7 @@ _Avoid_: Release loading, playback engine
 **Release page projection**:
 The policy that turns a Release payload and optional enrichment into the stable Release page model.
 _Avoid_: Release loading, GLW rendering
+
+**Catalog page operations**:
+The lifecycle policy for catalog, search, and schedule pages, including loading, validation, pagination, and empty/error states.
+_Avoid_: Release page projection, API transport

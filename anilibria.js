@@ -9,7 +9,7 @@ var settings = require('movian/settings');
 var api = require('./lib/api');
 var fmt = require('./lib/formatters');
 var pageEffectsModule = require('./lib/page-effects');
-var catalogPageModule = require('./lib/catalog-page');
+var catalogPageModule = require('./lib/catalog-page-operations');
 var settingsStateModule = require('./lib/settings-state');
 var releaseRouteModule = require('./lib/release-route');
 
@@ -25,23 +25,6 @@ var settingsState = settingsStateModule.create({ api: api, service: service });
 
 var releaseRoute = releaseRouteModule.create();
 var catalogPage = catalogPageModule.create({
-    sources: {
-        catalog: function (pageNumber, callback) {
-            api.catalog(pageNumber, callback);
-        },
-        search: function (query, pageNumber, callback) {
-            api.search(query, pageNumber, callback);
-        },
-        schedule: function (callback) {
-            api.schedule(callback);
-        }
-    },
-    effects: {
-        catalog: pageEffects.catalog,
-        search: pageEffects.search,
-        schedule: pageEffects.schedule,
-        error: pageEffects.error
-    },
     logo: LOGO,
     catalogView: CATALOG_VIEW,
     pageSize: PAGE_SIZE,

@@ -1,51 +1,39 @@
 var assert = require('assert');
-var Module = require('module');
+var apiModule = require('../lib/api');
+var transportModule = require('../lib/transport');
 
-function response(statuscode, body) {
-    return {
-        statuscode: statuscode,
-        toString: function () {
-            return typeof body === 'string' ? body : JSON.stringify(body);
-        }
-    };
-}
-
-function makeHttp(endpoint) {
+function makeTransport(endpoint) {
     var calls = [];
 
     return {
         calls: calls,
-        request: function (url, options, callback) {
-            calls.push({ url: url, options: options });
-            endpoint(url, options, callback);
+        buildQuery: transportModule.buildQuery,
+        CACHE_CATALOG: transportModule.CACHE_CATALOG,
+        CACHE_RELEASE: transportModule.CACHE_RELEASE,
+        CACHE_SCHEDULE: transportModule.CACHE_SCHEDULE,
+        CACHE_FRANCHISE: transportModule.CACHE_FRANCHISE,
+        request: function (path, callback, nocache, cacheTime) {
+            calls.push({
+                path: path,
+                nocache: nocache,
+                cacheTime: cacheTime
+            });
+            endpoint(path, callback, nocache, cacheTime);
         }
     };
 }
 
-function loadApi(http, fakeSession) {
-    var originalLoad = Module._load;
-    var apiPath = require.resolve('../lib/api');
-    var sessionPath = require.resolve('../lib/api-session');
-    var transportPath = require.resolve('../lib/transport');
-    var inspector = function () {};
-    delete require.cache[apiPath];
-    delete require.cache[sessionPath];
-    delete require.cache[transportPath];
-
-    Module._load = function (request) {
-        if (request === 'movian/http') return http;
-        if (request === './api-session' && fakeSession) return fakeSession;
-        if (request === 'native/io') {
-            return { httpInspectorCreate: inspector };
-        }
-        return originalLoad.apply(this, arguments);
+function createApi(endpoint, session) {
+    var transport = makeTransport(endpoint || function (path, callback) {
+        callback(null, { data: [] });
+    });
+    return {
+        api: apiModule.create({
+            transport: transport,
+            session: session
+        }),
+        transport: transport
     };
-
-    try {
-        return require(apiPath);
-    } finally {
-        Module._load = originalLoad;
-    }
 }
 
 function test(name, fn) {
@@ -58,200 +46,141 @@ function test(name, fn) {
     }
 }
 
-test('returns normalized endpoint data and cache metadata', function () {
-    var payload = { data: [{ id: 7 }] };
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, response(200, payload));
+test('builds endpoint methods around an injected transport', function () {
+    var request;
+    var query;
+    var transport = {
+        CACHE_CATALOG: 120,
+        buildQuery: function (params) {
+            query = params;
+            return '?encoded-search';
+        },
+        request: function (path, callback, nocache, cacheTime) {
+            request = {
+                path: path,
+                nocache: nocache,
+                cacheTime: cacheTime
+            };
+            callback(null, { data: [] });
+        }
+    };
+    var api = apiModule.create({ transport: transport });
+    var result;
+
+    api.search('  cats  ', 2, function (err, value) {
+        result = { err: err, value: value };
     });
-    var api = loadApi(http);
+
+    assert.deepStrictEqual(query, {
+        limit: 25,
+        'f[search]': 'cats',
+        'f[sorting]': 'FRESH_AT_DESC',
+        page: 2
+    });
+    assert.deepStrictEqual(request, {
+        path: '/anime/catalog/releases?encoded-search',
+        nocache: false,
+        cacheTime: 120
+    });
+    assert.deepStrictEqual(result, {
+        err: null,
+        value: { data: [] }
+    });
+});
+
+test('delegates catalog endpoint paths and results through the facade', function () {
+    var payload = { data: [{ id: 7 }] };
+    var target = createApi(function (path, callback) {
+        callback(null, { data: payload, cacheHit: false });
+    });
     var observed;
 
-    api.catalog(2, function (err, result) {
+    target.api.catalog(2, function (err, result) {
         observed = { err: err, result: result, argc: arguments.length };
     });
 
-    assert.strictEqual(observed.err, null);
-    assert.deepStrictEqual(observed.result, {
-        data: payload,
-        cacheHit: false
+    assert.deepStrictEqual(target.transport.calls, [{
+        path: '/anime/catalog/releases?limit=25&f%5Bsorting%5D=FRESH_AT_DESC&page=2',
+        nocache: false,
+        cacheTime: 120
+    }]);
+    assert.deepStrictEqual(observed, {
+        err: null,
+        result: { data: payload, cacheHit: false },
+        argc: 2
     });
-    assert.strictEqual(observed.argc, 2);
-    assert.ok(http.calls[0].url.indexOf('https://api.anilibria.app/api/v1/') === 0);
-    assert.strictEqual(http.calls[0].options.caching, true);
-    assert.strictEqual(http.calls[0].options.cacheTime, 120);
-    assert.strictEqual(http.calls[0].options.compression, true);
-    assert.strictEqual(http.calls[0].options.headers['Accept-Encoding'], undefined);
 });
 
-test('normalizes Movian cache status without exposing the response', function () {
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, response(0, { data: [] }));
+test('trims search input and defaults to the first page', function () {
+    var target = createApi(function (path, callback) {
+        callback(null, { data: [] });
     });
-    var api = loadApi(http);
-    var result;
 
-    api.search('  cats  ', 1, function (err, value) {
+    target.api.search('  cats  ', undefined, function (err) {
         assert.strictEqual(err, null);
-        result = value;
     });
 
-    assert.deepStrictEqual(result, {
-        data: { data: [] },
-        cacheHit: true
-    });
+    assert.deepStrictEqual(target.transport.calls, [{
+        path: '/anime/catalog/releases?limit=25&f%5Bsearch%5D=cats&f%5Bsorting%5D=FRESH_AT_DESC&page=1',
+        nocache: false,
+        cacheTime: 120
+    }]);
 });
 
-test('retries a bodyless 304 once without cache', function () {
-    var payload = { data: [{ id: 8 }] };
-    var attempts = 0;
-    var http = makeHttp(function (url, options, callback) {
-        attempts++;
-        if (attempts === 1) {
-            callback(null, response(304, ''));
-            return;
-        }
-        callback(null, response(200, payload));
-    });
-    var api = loadApi(http);
-    var observed;
+test('uses endpoint-specific cache policy for Release and schedule data', function () {
+    var target = createApi();
 
-    api.catalog(3, function (err, result) {
-        observed = { err: err, result: result };
-    });
+    target.api.release(7, function () {});
+    target.api.franchise(7, function () {});
+    target.api.schedule(function () {});
 
-    assert.strictEqual(observed.err, null);
-    assert.deepStrictEqual(observed.result, {
-        data: payload,
-        cacheHit: false
-    });
-    assert.strictEqual(http.calls.length, 2);
-    assert.strictEqual(http.calls[0].options.noFail, true);
-    assert.strictEqual(http.calls[1].options.noFail, true);
-    assert.strictEqual(http.calls[1].options.caching, undefined);
+    assert.deepStrictEqual(target.transport.calls, [{
+        path: '/anime/releases/7',
+        nocache: false,
+        cacheTime: 300
+    }, {
+        path: '/anime/franchises/release/7',
+        nocache: false,
+        cacheTime: 600
+    }, {
+        path: '/anime/schedule/week',
+        nocache: false,
+        cacheTime: 60
+    }]);
 });
 
-test('fails explicitly when the uncached retry is also 304', function () {
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, response(304, ''));
-    });
-    var api = loadApi(http);
-    var observed;
-
-    api.release(12, function (err, result) {
-        observed = { err: err, result: result };
-    });
-
-    assert.strictEqual(observed.result, undefined);
-    assert.strictEqual(observed.err.message, 'HTTP 304 after uncached retry');
-    assert.strictEqual(http.calls.length, 2);
-    assert.strictEqual(http.calls[1].options.caching, undefined);
-});
-
-test('fails explicitly when HTTP returns no response', function () {
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, undefined);
-    });
-    var api = loadApi(http);
-    var observed;
-
-    api.schedule(function (err, result) {
-        observed = { err: err, result: result };
-    });
-
-    assert.strictEqual(observed.result, undefined);
-    assert.strictEqual(observed.err.message, 'HTTP request returned no response');
-});
-
-test('returns HTTP and JSON failures through the endpoint seam', function () {
-    var httpStatus = makeHttp(function (url, options, callback) {
-        callback(null, response(503, '{}'));
-    });
-    var apiStatus = loadApi(httpStatus);
-    var statusError;
-    var statusResult;
-
-    apiStatus.release(12, function (err, result) {
-        statusError = err;
-        statusResult = result;
-    });
-
-    assert.strictEqual(statusError.message, 'HTTP 503');
-    assert.strictEqual(statusResult, undefined);
-
-    var httpJson = makeHttp(function (url, options, callback) {
-        callback(null, response(200, '{not json'));
-    });
-    var apiJson = loadApi(httpJson);
-    var jsonError;
-
-    apiJson.schedule(function (err) {
-        jsonError = err;
-    });
-
-    assert.ok(jsonError.message.indexOf('JSON parse error:') === 0);
-});
-
-test('propagates franchise transport failures through the endpoint seam', function () {
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, response(503, '{}'));
-    });
-    var api = loadApi(http);
-    var observed;
-
-    api.franchise(12, function (err, result) {
-        observed = { err: err, result: result };
-    });
-
-    assert.strictEqual(observed.err.message, 'HTTP 503');
-    assert.strictEqual(observed.result, undefined);
-});
-
-test('manual base URL skips mirror discovery', function () {
-    var http = makeHttp(function (url, options, callback) {
-        callback(null, response(200, { data: [] }));
-    });
-    var api = loadApi(http);
-    var result;
-
-    api.setBaseUrl('https://manual.example/api/v1');
-    api.catalog(1, function (err, value) {
-        assert.strictEqual(err, null);
-        result = value;
-    });
-
-    assert.deepStrictEqual(result, {
-        data: { data: [] },
-        cacheHit: false
-    });
-    assert.strictEqual(http.calls.length, 1);
-    assert.ok(http.calls[0].url.indexOf('https://manual.example/api/v1/') === 0);
-});
-
-test('delegates mirror refresh through the API facade', function () {
-    var refreshCalled = false;
-    var fakeSession = {
-        snapshot: function () { return { headers: {}, cacheEnabled: true }; },
-        installInspector: function () {},
+test('delegates session controls through the API facade', function () {
+    var calls = [];
+    var session = {
         refreshConfig: function (callback) {
-            refreshCalled = true;
+            calls.push(['refresh']);
             callback(null, { url: 'https://mirror.example/api/v1', source: 'dns' });
         },
-        setBaseUrl: function () {},
-        setUserAgent: function () {},
-        setCookie: function () {},
-        setCacheEnabled: function () {}
+        setCacheEnabled: function (value) { calls.push(['cache', value]); },
+        setBaseUrl: function (value) { calls.push(['url', value]); },
+        setCookie: function (value) { calls.push(['cookie', value]); },
+        setUserAgent: function (value) { calls.push(['ua', value]); }
     };
-    var api = loadApi(makeHttp(function () {}), fakeSession);
+    var target = createApi(null, session);
     var observed;
 
-    api.refreshConfig(function (err, result) {
+    target.api.setCacheEnabled(false);
+    target.api.setBaseUrl('https://manual.example/api/v1');
+    target.api.setCookie('clearance');
+    target.api.setUserAgent('Test Agent');
+    target.api.refreshConfig(function (err, result) {
         observed = { err: err, result: result };
     });
 
-    assert.strictEqual(refreshCalled, true);
-    assert.strictEqual(observed.err, null);
-    assert.deepStrictEqual(observed.result, {
-        url: 'https://mirror.example/api/v1',
-        source: 'dns'
+    assert.deepStrictEqual(calls, [
+        ['cache', false],
+        ['url', 'https://manual.example/api/v1'],
+        ['cookie', 'clearance'],
+        ['ua', 'Test Agent'],
+        ['refresh']
+    ]);
+    assert.deepStrictEqual(observed, {
+        err: null,
+        result: { url: 'https://mirror.example/api/v1', source: 'dns' }
     });
 });

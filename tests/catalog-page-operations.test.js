@@ -114,6 +114,7 @@ test('owns catalog page lifecycle and pagination state', function () {
         effects: {
             catalog: function (page, items) {
                 rendered = items;
+                return items.length;
             }
         }
     });
@@ -171,7 +172,7 @@ test('owns search validation and successful projection', function () {
         effects: {
             search: function (page, items) {
                 rendered = items;
-                page.entries += items.length;
+                return items.length;
             }
         }
     });
@@ -191,6 +192,7 @@ test('keeps search empty validation and schedule lifecycle policy', function () 
     var schedulePage = page();
     var errors = [];
     var scheduled;
+    var formattedSchedule;
     var deps = dependencies({
         sources: {
             search: function () {
@@ -201,7 +203,13 @@ test('keeps search empty validation and schedule lifecycle policy', function () 
             }
         },
         formatters: {
-            schedule: function (data) { return data; }
+            schedule: function (data) {
+                formattedSchedule = data;
+                return [{
+                    day: 'Расписание',
+                    items: ['prepared-day']
+                }];
+            }
         },
         effects: {
             error: function (page, message) {
@@ -222,7 +230,11 @@ test('keeps search empty validation and schedule lifecycle policy', function () 
     assert.strictEqual(schedulePage.type, 'directory');
     assert.strictEqual(schedulePage.metadata.title, 'Расписание');
     assert.strictEqual(schedulePage.loading, false);
-    assert.deepStrictEqual(scheduled, ['day']);
+    assert.deepStrictEqual(formattedSchedule, ['day']);
+    assert.deepStrictEqual(scheduled, [{
+        day: 'Расписание',
+        items: ['prepared-day']
+    }]);
 });
 
 test('composes default API, formatter, and page effects adapters', function () {

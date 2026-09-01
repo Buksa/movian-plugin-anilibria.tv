@@ -39,13 +39,16 @@ test('owns release page initialization, render, and continuation scan order', fu
         load: function (id, logo, callback) {
             events.push('load:' + id + ':' + logo);
             assert.strictEqual(target.loading, true);
-            callback(null, { title: 'model' });
+            callback(null, { metadata: { title: 'Loaded release' } });
         },
         release: function (page, model, viewPath, releaseUrl) {
             events.push('render');
+            assert.strictEqual(page.type, 'raw');
+            assert.strictEqual(page.metadata.title, 'Loaded release');
             assert.strictEqual(page.metadata.glwview, viewPath);
             assert.strictEqual(page.metadata.retryUrl, releaseUrl);
-            page.loading = false;
+            assert.strictEqual(page.model.error, '');
+            assert.strictEqual(page.loading, false);
             page.rendered = model;
         },
         continuation: {

@@ -76,14 +76,10 @@ test('projects collections to a raw page while keeping nodes episode-only', func
         'anilibria:release:10224'
     );
 
-    assert.strictEqual(page.type, 'raw');
-    assert.strictEqual(page.metadata.title, 'Дьявол может плакать 2');
-    assert.strictEqual(page.metadata.glwview, '/plugin/views/release.view');
-    assert.strictEqual(page.metadata.retryUrl, 'anilibria:release:10224');
-    assert.strictEqual(page.metadata.franchise.releases.length, 1);
-    assert.strictEqual(page.metadata.torrentGroups.length, 1);
+    assert.strictEqual(page.type, '');
+    assert.deepStrictEqual(page.metadata, {});
     assert.strictEqual(page.items.length, 1);
-    assert.deepStrictEqual(page.appendLoadingStates, [false]);
+    assert.deepStrictEqual(page.appendLoadingStates, [true]);
     assert.strictEqual(items.length, 1);
     assert.strictEqual(page.items[0].root.display.title, 'Падший');
     assert.strictEqual(page.items[0].root.episode, 1);
@@ -142,8 +138,9 @@ test('keeps typed operations independent from episode node implementation', func
     assert.deepStrictEqual(renderedEpisodes, [{ id: 1 }]);
     assert.deepStrictEqual(result, ['projected-episode']);
     assert.strictEqual(page.items[0].root.url, 'episode-url');
-    assert.strictEqual(page.metadata.glwview, '/release.view');
-    assert.strictEqual(page.loading, false);
+    assert.strictEqual(page.metadata.glwview, undefined);
+    assert.strictEqual(page.loading, true);
+    assert.strictEqual(page.entries, 0);
 });
 
 test('projects catalog, search, schedule, and error page operations', function () {
@@ -154,26 +151,33 @@ test('projects catalog, search, schedule, and error page operations', function (
     var errorPage = fakePage();
     var effects = pageEffects.create();
 
-    effects.catalog(catalogPage, [{
+    var catalogCount = effects.catalog(catalogPage, [{
         url: 'anilibria:release:1',
         type: 'video',
         metadata: { title: 'Catalog release' }
     }]);
-    effects.search(searchPage, [{
+    var searchCount = effects.search(searchPage, [{
         url: 'anilibria:release:2',
         type: 'video',
         metadata: { title: 'Search release' }
     }]);
-    effects.schedule(schedulePage, [{
-        id: 3,
-        name: { main: 'Schedule release' }
+    var scheduleCount = effects.schedule(schedulePage, [{
+        day: 'Расписание',
+        items: [{
+            url: 'anilibria:release:3',
+            type: 'video',
+            metadata: { title: 'Schedule release' }
+        }]
     }]);
     effects.error(errorPage, 'network down');
 
+    assert.strictEqual(catalogCount, 1);
+    assert.strictEqual(searchCount, 1);
+    assert.strictEqual(scheduleCount, 1);
     assert.strictEqual(catalogPage.items.length, 1);
     assert.strictEqual(catalogPage.items[0].root.metadata.title, 'Catalog release');
     assert.strictEqual(searchPage.items.length, 1);
-    assert.strictEqual(searchPage.entries, 1);
+    assert.strictEqual(searchPage.entries, 0);
     assert.strictEqual(schedulePage.items.length, 2);
     assert.strictEqual(schedulePage.items[0].root.type, 'separator');
     assert.strictEqual(schedulePage.items[1].root.type, 'video');
@@ -182,4 +186,29 @@ test('projects catalog, search, schedule, and error page operations', function (
         errorPage.items[1].root.metadata.title.toRichString(),
         'network down'
     );
+});
+
+test('returns zero for empty collections without mutating entries', function () {
+    var page = fakePage();
+    page.entries = 7;
+
+    var count = pageEffects.create().search(page, []);
+
+    assert.strictEqual(count, 0);
+    assert.strictEqual(page.entries, 7);
+    assert.strictEqual(page.items.length, 2);
+});
+
+test('propagates episode renderer failures', function () {
+    var effects = pageEffects.create({
+        episodeNode: {
+            render: function () {
+                throw new Error('renderer unavailable');
+            }
+        }
+    });
+
+    assert.throws(function () {
+        effects.release(fakePage(), { episodes: [{ id: 1 }] });
+    }, /renderer unavailable/);
 });

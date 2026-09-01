@@ -184,3 +184,46 @@ test('delegates session controls through the API facade', function () {
         result: { url: 'https://mirror.example/api/v1', source: 'dns' }
     });
 });
+
+test('runs the Cloudflare bypass action uncached', function () {
+    var request;
+    var target = createApi(function (path, callback, nocache, cacheTime) {
+        request = {
+            path: path,
+            nocache: nocache,
+            cacheTime: cacheTime
+        };
+        callback(null, { data: [] });
+    });
+    var observed;
+
+    target.api.testBypass(function (success, message) {
+        observed = { success: success, message: message };
+    });
+
+    assert.deepStrictEqual(request, {
+        path: '/anime/catalog/releases?limit=1&page=1',
+        nocache: true,
+        cacheTime: undefined
+    });
+    assert.deepStrictEqual(observed, {
+        success: true,
+        message: undefined
+    });
+});
+
+test('reports a Cloudflare bypass failure through its callback', function () {
+    var target = createApi(function (path, callback) {
+        callback(new Error('blocked'));
+    });
+    var observed;
+
+    target.api.testBypass(function (success, message) {
+        observed = { success: success, message: message };
+    });
+
+    assert.deepStrictEqual(observed, {
+        success: false,
+        message: 'blocked'
+    });
+});

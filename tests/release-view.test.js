@@ -161,3 +161,53 @@ test('rejects a malformed required release payload', function () {
     assert.strictEqual(franchiseCalled, false);
     assert.strictEqual(projectionCalled, false);
 });
+
+test('uses null optional enrichment when the franchise result has no data', function () {
+    var franchiseData;
+    var api = {
+        release: function (id, callback) {
+            callback(null, { data: { id: id, name: { main: 'Release' } } });
+        },
+        franchise: function (id, callback) {
+            callback(null, {});
+        }
+    };
+    var projection = {
+        project: function (request) {
+            franchiseData = request.franchiseData;
+            return { marker: true };
+        }
+    };
+    var observed;
+
+    loader(api, projection, []).load(13, 'logo.png', function (err, value) {
+        observed = { err: err, model: value };
+    });
+
+    assert.strictEqual(franchiseData, null);
+    assert.strictEqual(observed.err, null);
+    assert.deepStrictEqual(observed.model, { marker: true });
+});
+
+test('does not catch projection exceptions', function () {
+    var failure = new Error('projection failed');
+    var api = {
+        release: function (id, callback) {
+            callback(null, { data: { id: id, name: { main: 'Release' } } });
+        },
+        franchise: function (id, callback) {
+            callback(null, { data: null });
+        }
+    };
+    var projection = {
+        project: function () {
+            throw failure;
+        }
+    };
+
+    assert.throws(function () {
+        loader(api, projection, []).load(14, 'logo.png', function () {});
+    }, function (err) {
+        return err === failure;
+    });
+});
